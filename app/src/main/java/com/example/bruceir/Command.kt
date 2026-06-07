@@ -21,3 +21,10 @@ data class IrFolder(
     val items: MutableList<Any> = mutableListOf(),
     val type: String = "folder"
 ) : Serializable
+
+data class MacroSet(
+    var name: String,
+    val commands: MutableList<Command> = mutableListOf(),
+    var delayMs: Long = 600,
+    var isLooping: Boolean = false
+) : Serializable

@@ -1,29 +1,31 @@
 package com.example.bruceir
 
-import android.hardware.ConsumerIrManager
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 
-class AcTurboManager(private val irManager: ConsumerIrManager?) {
+class AcTurboManager(context: Context) {
 
     private var isRunning = false
     private val handler = Handler(Looper.getMainLooper())
+    private val transmitter = IrTransmitter(context)
 
     fun start(onProgress: (Int, Int, String) -> Unit, onFinished: () -> Unit) {
         if (isRunning) return
         isRunning = true
         
-        val codes = AcCodes.goneTurbo
+        val listToUse = AcCodes.goneTurbo
+        val delay = 150L
 
         Thread {
-            for (i in codes.indices) {
+            for (i in listToUse.indices) {
                 if (!isRunning) break
-                val cmd = codes[i]
-                handler.post { onProgress(i + 1, codes.size, cmd.name) }
+                val cmd = listToUse[i]
+                handler.post { onProgress(i + 1, listToUse.size, cmd.name) }
                 try {
-                    irManager?.transmit(cmd.frequency, cmd.pattern)
+                    transmitter.transmit(cmd.frequency, cmd.pattern)
                 } catch (e: Exception) {}
-                Thread.sleep(150) // TURBO: krótszy czas oczekiwania
+                Thread.sleep(delay)
             }
             isRunning = false
             handler.post { onFinished() }

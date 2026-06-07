@@ -5,7 +5,6 @@ import android.content.pm.ShortcutInfo
 import android.content.pm.ShortcutManager
 import android.graphics.Color
 import android.graphics.drawable.Icon
-import android.hardware.ConsumerIrManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -16,29 +15,20 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.WindowCompat
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.example.bruceir.R
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import java.util.Collections
+import java.util.Locale
 import kotlin.math.abs
 
 class MainActivity : AppCompatActivity() {
-    override fun attachBaseContext(newBase: android.content.Context) {
-        val prefs = newBase.getSharedPreferences("settings", MODE_PRIVATE)
-        val lang = prefs.getString("lang", "en") ?: "en"
-        val locale = java.util.Locale(lang)
-        java.util.Locale.setDefault(locale)
-        val config = android.content.res.Configuration(newBase.resources.configuration)
-        config.setLocale(locale)
-        super.attachBaseContext(newBase.createConfigurationContext(config))
-    }
 
-    private var irManager: ConsumerIrManager? = null
+    private lateinit var transmitter: IrTransmitter
     private lateinit var adapter: CommandAdapter
     private var allData = IrFolder("ROOT") 
     private var currentFolder = allData    
@@ -48,49 +38,33 @@ class MainActivity : AppCompatActivity() {
     private var isEditMode = false 
     private var isListView = false
     private lateinit var tvBGoneManager: TvBGoneManager
-    private lateinit var acGoneManager: AcGoneManager
-    private lateinit var acTurboManager: AcTurboManager
     private lateinit var macroManager: MacroManager
 
-    // Launcher 1: Wybór pojedynczego pliku .ir (Bruce/Flipper)
     private val pickFile = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { importBruceFile(it) }
     }
-
-    // Launcher 2: Eksport całej bazy do pliku JSON
     private val exportLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         uri?.let { performExport(it) }
     }
-
-    // Launcher 3: Import całej bazy z pliku JSON (Kopia zapasowa)
     private val importFullDbLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { performFullImport(it) }
     }
-
-    // Launcher 4: Wybór pliku ataku TV-B-Gone
     private val pickAttackFile = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { loadCustomAttack(it, isAc = false) }
-    }
-
-    private val pickAcAttackFile = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let { loadCustomAttack(it, isAc = true) }
+        uri?.let { loadCustomAttack(it) }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        irManager = getSystemService(CONSUMER_IR_SERVICE) as? ConsumerIrManager
-        tvBGoneManager = TvBGoneManager(irManager)
-        acGoneManager = AcGoneManager(irManager)
-        acTurboManager = AcTurboManager(irManager)
-        macroManager = MacroManager(this, irManager)
+        transmitter = IrTransmitter(this)
+        tvBGoneManager = TvBGoneManager(this)
+        macroManager = MacroManager(this, transmitter)
 
-        // Obsługa skrótu (Pin to Home)
         if (intent?.action == "com.example.bruceir.ACTION_SEND_IR") {
             val freq = intent.getIntExtra("freq", 38000)
             val pattern = intent.getIntArrayExtra("pattern")
             if (pattern != null) {
-                irManager?.transmit(freq, pattern)
+                transmitter.transmit(freq, pattern)
                 Toast.makeText(this, R.string.toast_signal_sent, Toast.LENGTH_SHORT).show()
                 finish()
                 return
@@ -99,12 +73,7 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_main)
 
-        // Usuwamy wymuszony biały kolor paska stanu, pozwalamy systemowi/tematowi zdecydować
-        try {
-            // WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = true
-        } catch (e: Exception) {}
-
-        load() // Wczytaj bazę z pamięci telefonu
+        load() 
 
         val rv = findViewById<RecyclerView>(R.id.recyclerView)
         val lm = GridLayoutManager(this, 3)
@@ -113,15 +82,17 @@ class MainActivity : AppCompatActivity() {
                 return if (isListView) 3 else 1
             }
         }
-        rv.itemAnimator = null // Wyłączamy animacje dla trybu SWAP
+        rv.itemAnimator = null 
 
-        adapter = CommandAdapter(currentFolder.items, irManager, { action, item, pos ->
+        adapter = CommandAdapter(currentFolder.items, null, { action, item, pos ->
             when (action) {
                 CommandAdapter.ActionType.DELETE -> {
                     if (item == recentFolder || item == downloadedFolder) return@CommandAdapter
-                    currentFolder.items.removeAt(pos)
-                    save()
-                    adapter.notifyDataSetChanged()
+                    confirmAction(R.string.confirm_delete_msg) {
+                        currentFolder.items.removeAt(pos)
+                        save()
+                        adapter.notifyDataSetChanged()
+                    }
                 }
                 CommandAdapter.ActionType.EDIT -> {
                     if (item == recentFolder || item == downloadedFolder) return@CommandAdapter
@@ -139,17 +110,19 @@ class MainActivity : AppCompatActivity() {
                 }
                 CommandAdapter.ActionType.ADD_TO_MACRO -> {
                     if (item is Command) {
-                        val macro = macroManager.getMacro()
-                        macro.add(item)
-                        macroManager.saveMacro(macro)
-                        Toast.makeText(this, R.string.btn_add_to_macro, Toast.LENGTH_SHORT).show()
+                        showMacroPickerForCommand(item)
                     }
                 }
             }
         }, { cmd ->
+            transmitter.transmit(cmd.frequency, cmd.pattern)
             addToRecent(cmd)
             if (currentFolder == recentFolder) refreshList()
         })
+
+        // Apply sound setting
+        val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+        adapter.setSoundEnabled(prefs.getBoolean("click_sound", true))
 
         rv.layoutManager = lm
         rv.adapter = adapter
@@ -175,7 +148,6 @@ class MainActivity : AppCompatActivity() {
         })
         touchHelper.attachToRecyclerView(rv)
 
-        // Przycisk kłódki
         findViewById<ImageButton>(R.id.btnLock).setOnClickListener {
             isEditMode = !isEditMode
             adapter.setEditMode(isEditMode)
@@ -191,26 +163,17 @@ class MainActivity : AppCompatActivity() {
         }
 
         findViewById<ImageButton>(R.id.btnMacro).setOnClickListener {
-            showMacroDialog()
+            showMacroListDialog()
         }
 
-        findViewById<ImageButton>(R.id.btnAcTurbo).setOnClickListener {
-            showAcTurboDialog()
-        }
+        findViewById<ImageButton>(R.id.btnTvBGone).setOnClickListener { showTvBGoneDialog() }
 
         findViewById<ImageButton>(R.id.btnViewMode).setOnClickListener {
             isListView = !isListView
             adapter.setListView(isListView)
-            val rv = findViewById<RecyclerView>(R.id.recyclerView)
-            
-            // Odświeżamy span assignments, aby spanSizeLookup zadziałał z nową wartością isListView
-
             (it as ImageButton).setImageResource(if (isListView) android.R.drawable.ic_dialog_dialer else android.R.drawable.ic_menu_sort_by_size)
         }
 
-        findViewById<ImageButton>(R.id.btnTvBGone).setOnClickListener { showTvBGoneDialog() }
-        findViewById<ImageButton>(R.id.btnAcGone).setOnClickListener { showAcGoneDialog() }
-        findViewById<FloatingActionButton>(R.id.fabAdd).setOnClickListener { showAddMenu() }
         findViewById<ImageButton>(R.id.btnSearch).setOnClickListener {
             val et = findViewById<EditText>(R.id.etSearch)
             if (et.visibility == View.VISIBLE) {
@@ -225,6 +188,10 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<ImageView>(R.id.ivLogo).setOnClickListener {
             showInfoDialog()
+        }
+
+        findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fabAdd).setOnClickListener {
+            showManagementMenu()
         }
 
         findViewById<EditText>(R.id.etSearch).addTextChangedListener(object : android.text.TextWatcher {
@@ -246,201 +213,301 @@ class MainActivity : AppCompatActivity() {
         refreshList()
     }
 
+    private fun confirmAction(msgRes: Int, onConfirm: () -> Unit) {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.confirm_title)
+            .setMessage(msgRes)
+            .setPositiveButton(R.string.dialog_ok) { _, _ -> onConfirm() }
+            .setNegativeButton(R.string.dialog_cancel, null)
+            .show()
+    }
+
+    private fun showManagementMenu() {
+        val ops = arrayOf(
+            getString(R.string.import_op_bruce_file),
+            getString(R.string.import_op_url),
+            getString(R.string.import_op_folder),
+            getString(R.string.import_op_manual),
+            getString(R.string.import_op_export),
+            getString(R.string.import_op_import)
+        )
+        AlertDialog.Builder(this)
+            .setTitle(R.string.import_menu_title)
+            .setItems(ops) { _, w ->
+                when (w) {
+                    0 -> pickFile.launch("*/*")
+                    1 -> showImportUrlDialog()
+                    2 -> showAddFolder()
+                    3 -> showAddManual()
+                    4 -> exportLauncher.launch("BruceIR_Backup.json")
+                    5 -> importFullDbLauncher.launch("application/json")
+                }
+            }.show()
+    }
+
     private fun showTvBGoneDialog() {
         val dialogView = LayoutInflater.from(this).inflate(android.R.layout.simple_list_item_2, null)
         val text1 = dialogView.findViewById<TextView>(android.R.id.text1)
         val text2 = dialogView.findViewById<TextView>(android.R.id.text2)
         
-        text1.text = "Tryb: Wbudowane kody"
-        text2.text = "Gotowy do ataku (Power OFF)"
+        text1.text = getString(R.string.tvgone_mode)
+        text2.text = getString(R.string.tvgone_ready)
 
         val dialog = AlertDialog.Builder(this)
             .setTitle("TV-B-Gone")
             .setView(dialogView)
-            .setPositiveButton("START", null)
-            .setNegativeButton("ZATRZYMAJ") { _, _ -> tvBGoneManager.stop() }
-            .setNeutralButton("WCZYTAJ PLIK .IR", null)
+            .setPositiveButton(R.string.tvgone_start, null)
+            .setNegativeButton(R.string.tvgone_stop) { _, _ -> tvBGoneManager.stop() }
+            .setNeutralButton("MENU", null)
             .show()
 
         val startBtn = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-        val loadBtn = dialog.getButton(AlertDialog.BUTTON_NEUTRAL)
+        val menuBtn = dialog.getButton(AlertDialog.BUTTON_NEUTRAL)
 
         startBtn.setOnClickListener {
             startBtn.isEnabled = false
             tvBGoneManager.start({ current, total, name ->
-                text1.text = "Atak: $current / $total"
-                text2.text = "Kod: $name"
-            }, {
-                text1.text = "Atak zakończony!"
-                text2.text = "Wszystkie kody zostały wysłane."
-                startBtn.isEnabled = true
-            })
-        }
-
-        loadBtn.setOnClickListener {
-            pickAttackFile.launch("*/*")
-            dialog.dismiss()
-        }
-    }
-
-    private fun showAcGoneDialog() {
-        val dialogView = LayoutInflater.from(this).inflate(android.R.layout.simple_list_item_2, null)
-        val text1 = dialogView.findViewById<TextView>(android.R.id.text1)
-        val text2 = dialogView.findViewById<TextView>(android.R.id.text2)
-        
-        text1.text = "Tryb: Wbudowane (Power OFF)"
-        text2.text = "Gotowy do wyłączenia klimatyzacji"
-
-        val dialog = AlertDialog.Builder(this)
-            .setTitle("AC-Gone (Power OFF)")
-            .setView(dialogView)
-            .setPositiveButton("START", null)
-            .setNegativeButton("ZATRZYMAJ") { _, _ -> acGoneManager.stop() }
-            .setNeutralButton("WCZYTAJ PLIK .IR", null)
-            .show()
-
-        val startBtn = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-        val loadBtn = dialog.getButton(AlertDialog.BUTTON_NEUTRAL)
-
-        startBtn.setOnClickListener {
-            startBtn.isEnabled = false
-            acGoneManager.start({ current, total, name ->
-                text1.text = "Atak AC: $current / $total"
-                text2.text = "Urządzenie: $name"
-            }, {
-                text1.text = "Zakończono!"
-                text2.text = "Wszystkie kody AC Gone wysłane."
-                startBtn.isEnabled = true
-            })
-        }
-
-        loadBtn.setOnClickListener {
-            pickAcAttackFile.launch("*/*")
-            dialog.dismiss()
-        }
-    }
-
-    private fun showMacroDialog() {
-        val currentMacro = macroManager.getMacro()
-        if (currentMacro.isEmpty()) {
-            AlertDialog.Builder(this)
-                .setTitle(R.string.macro_title)
-                .setMessage(R.string.macro_empty)
-                .setNeutralButton(R.string.macro_add) { _, _ ->
-                    showCommandPicker(allData) { selectedCmd ->
-                        currentMacro.add(selectedCmd)
-                        macroManager.saveMacro(currentMacro)
-                        showMacroDialog()
-                    }
+                text1.post {
+                    text1.text = getString(R.string.tvgone_progress, current, total)
+                    text2.text = getString(R.string.tvgone_code, name)
                 }
-                .setNegativeButton(R.string.dialog_close, null)
-                .show()
-            return
+            }, {
+                text1.post {
+                    text1.text = getString(R.string.tvgone_finished)
+                    text2.text = ""
+                    startBtn.isEnabled = true
+                }
+            })
         }
 
-        val names = currentMacro.map { it.name }.toTypedArray()
+        menuBtn.setOnClickListener {
+            val ops = arrayOf(getString(R.string.tvgone_load_file), "Add from Database", "Reset to Default")
+            AlertDialog.Builder(this)
+                .setItems(ops) { _, w ->
+                    when(w) {
+                        0 -> pickAttackFile.launch("*/*")
+                        1 -> showCommandPicker(allData) { cmd ->
+                            val currentList = tvBGoneManager.getAttackList().toMutableList()
+                            currentList.add(IrCommand(cmd.name, cmd.frequency, cmd.pattern))
+                            tvBGoneManager.setAttackList(currentList)
+                            Toast.makeText(this, "Added: ${cmd.name}", Toast.LENGTH_SHORT).show()
+                        }
+                        2 -> {
+                            tvBGoneManager.setAttackList(emptyList())
+                            Toast.makeText(this, "Reset to built-in codes", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }.show()
+        }
+    }
+
+    private fun showMacroListDialog() {
+        val macros = macroManager.getAllMacros()
+        val names = macros.map { it.name }.toMutableList()
+        names.add("+ " + getString(R.string.macro_new))
 
         AlertDialog.Builder(this)
-            .setTitle(R.string.macro_title)
+            .setTitle(R.string.macro_select)
+            .setItems(names.toTypedArray()) { _, which ->
+                if (which == macros.size) {
+                    showNewMacroDialog()
+                } else {
+                    showMacroDetailsDialog(macros[which])
+                }
+            }
+            .setNegativeButton(R.string.dialog_close, null)
+            .show()
+    }
+
+    private fun showNewMacroDialog() {
+        val input = EditText(this).apply { hint = "Macro Name" }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.macro_new)
+            .setView(input)
+            .setPositiveButton(R.string.dialog_ok) { _, _ ->
+                val name = input.text.toString()
+                if (name.isNotEmpty()) {
+                    val newMacro = MacroSet(name)
+                    macroManager.updateMacro(newMacro)
+                    showMacroDetailsDialog(newMacro)
+                }
+            }
+            .setNegativeButton(R.string.dialog_cancel, null)
+            .show()
+    }
+
+    private fun showMacroDialogByName(name: String) {
+        showMacroDetailsDialog(macroManager.getMacro(name))
+    }
+
+    private fun showMacroDetailsDialog(macro: MacroSet) {
+        val names = macro.commands.map { it.name }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle(macro.name)
             .setItems(names) { _, which ->
-                showMacroItemOptions(currentMacro, which)
+                showMacroItemOptions(macro, which)
             }
             .setPositiveButton(R.string.macro_start) { _, _ ->
-                showMacroConfigDialog()
+                startMacroExecution(macro)
             }
             .setNeutralButton(R.string.macro_add) { _, _ ->
                 showCommandPicker(allData) { selectedCmd ->
-                    currentMacro.add(selectedCmd)
-                    macroManager.saveMacro(currentMacro)
-                    showMacroDialog()
+                    macro.commands.add(selectedCmd)
+                    macroManager.updateMacro(macro)
+                    showMacroDetailsDialog(macro)
                 }
             }
-            .setNegativeButton(R.string.macro_clear) { _, _ ->
-                macroManager.saveMacro(emptyList())
-                Toast.makeText(this, R.string.macro_clear, Toast.LENGTH_SHORT).show()
+            .setNegativeButton(R.string.macro_config) { _, _ ->
+                showMacroConfigDialog(macro)
             }
+            .setNeutralButton("MENU", { _, _ ->
+                showMacroExtraMenu(macro)
+            })
             .show()
     }
 
-    private fun showMacroItemOptions(macro: MutableList<Command>, index: Int) {
-        val options = arrayOf("↑ Przesuń w górę", "↓ Przesuń w dół", "🗑 Usuń")
+    private fun showMacroExtraMenu(macro: MacroSet) {
+        val ops = arrayOf(
+            getString(R.string.macro_rename),
+            getString(R.string.macro_delete_all),
+            getString(R.string.macro_clear),
+            getString(R.string.macro_move_up),
+            getString(R.string.macro_move_down)
+        )
         AlertDialog.Builder(this)
-            .setTitle(macro[index].name)
+            .setItems(ops) { _, w ->
+                val all = macroManager.getAllMacros()
+                val idx = all.indexOfFirst { it.name == macro.name }
+                when(w) {
+                    0 -> {
+                        val input = EditText(this).apply { setText(macro.name) }
+                        AlertDialog.Builder(this).setTitle(R.string.macro_rename).setView(input).setPositiveButton("OK") { _, _ ->
+                            val oldName = macro.name
+                            macro.name = input.text.toString()
+                            all.removeAll { it.name == oldName }
+                            all.add(macro)
+                            macroManager.saveAllMacros(all)
+                            showMacroDetailsDialog(macro)
+                        }.show()
+                    }
+                    1 -> {
+                        confirmAction(R.string.confirm_delete_msg) {
+                            all.removeAll { it.name == macro.name }
+                            macroManager.saveAllMacros(all)
+                            showMacroListDialog()
+                        }
+                    }
+                    2 -> {
+                        confirmAction(R.string.confirm_title) {
+                            macro.commands.clear()
+                            macroManager.updateMacro(macro)
+                            showMacroDetailsDialog(macro)
+                        }
+                    }
+                    3 -> { // Move Up
+                        if (idx > 0) {
+                            Collections.swap(all, idx, idx - 1)
+                            macroManager.saveAllMacros(all)
+                            showMacroListDialog()
+                        }
+                    }
+                    4 -> { // Move Down
+                        if (idx != -1 && idx < all.size - 1) {
+                            Collections.swap(all, idx, idx + 1)
+                            macroManager.saveAllMacros(all)
+                            showMacroListDialog()
+                        }
+                    }
+                }
+            }.show()
+    }
+
+    private fun showMacroItemOptions(macro: MacroSet, index: Int) {
+        val options = arrayOf(getString(R.string.macro_move_up), getString(R.string.macro_move_down), getString(R.string.macro_remove_item))
+        AlertDialog.Builder(this)
+            .setTitle(macro.commands[index].name)
             .setItems(options) { _, which ->
                 when (which) {
-                    0 -> { // Up
-                        if (index > 0) {
-                            Collections.swap(macro, index, index - 1)
-                            macroManager.saveMacro(macro)
-                            showMacroDialog()
-                        }
-                    }
-                    1 -> { // Down
-                        if (index < macro.size - 1) {
-                            Collections.swap(macro, index, index + 1)
-                            macroManager.saveMacro(macro)
-                            showMacroDialog()
-                        }
-                    }
-                    2 -> { // Delete
-                        macro.removeAt(index)
-                        macroManager.saveMacro(macro)
-                        showMacroDialog()
-                    }
+                    0 -> { if (index > 0) { Collections.swap(macro.commands, index, index - 1); macroManager.updateMacro(macro); showMacroDetailsDialog(macro) } }
+                    1 -> { if (index < macro.commands.size - 1) { Collections.swap(macro.commands, index, index + 1); macroManager.updateMacro(macro); showMacroDetailsDialog(macro) } }
+                    2 -> { macro.commands.removeAt(index); macroManager.updateMacro(macro); showMacroDetailsDialog(macro) }
                 }
             }
             .show()
     }
 
-    private fun showMacroConfigDialog() {
+    private fun showMacroConfigDialog(macro: MacroSet) {
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(60, 40, 60, 20)
         }
-
-        val cbLoop = CheckBox(this).apply { text = "Zapętlij (Loop)" }
-        val tvDelay = TextView(this).apply { text = "Opóźnienie między komendami (ms):" }
+        val cbLoop = CheckBox(this).apply { text = getString(R.string.macro_loop); isChecked = macro.isLooping }
+        val tvDelay = TextView(this).apply { text = getString(R.string.macro_delay) }
         val etDelay = EditText(this).apply { 
-            hint = "600"
-            setText("600")
+            setText(macro.delayMs.toString())
             inputType = android.text.InputType.TYPE_CLASS_NUMBER
         }
-
-        layout.addView(cbLoop)
-        layout.addView(tvDelay)
-        layout.addView(etDelay)
+        layout.addView(cbLoop); layout.addView(tvDelay); layout.addView(etDelay)
 
         AlertDialog.Builder(this)
-            .setTitle("Konfiguracja Makra")
+            .setTitle(R.string.macro_config)
             .setView(layout)
-            .setPositiveButton("START") { _, _ ->
-                val delay = etDelay.text.toString().toLongOrNull() ?: 600L
-                val isLoop = cbLoop.isChecked
-                startMacroExecution(delay, isLoop)
+            .setPositiveButton(R.string.dialog_save) { _, _ ->
+                macro.isLooping = cbLoop.isChecked
+                macro.delayMs = etDelay.text.toString().toLongOrNull() ?: 600L
+                macroManager.updateMacro(macro)
+                showMacroDetailsDialog(macro)
             }
-            .setNegativeButton("Anuluj", null)
+            .setNegativeButton(R.string.dialog_cancel, null)
             .show()
     }
 
-    private fun startMacroExecution(delay: Long = 600L, isLooping: Boolean = false) {
+    private fun startMacroExecution(macro: MacroSet) {
         val dialogView = LayoutInflater.from(this).inflate(android.R.layout.simple_list_item_2, null)
         val t1 = dialogView.findViewById<TextView>(android.R.id.text1)
         val t2 = dialogView.findViewById<TextView>(android.R.id.text2)
         
         val progressDialog = AlertDialog.Builder(this)
-            .setTitle(if (isLooping) "Makra (PĘTLA)..." else "Wykonywanie Makra...")
+            .setTitle(if (macro.isLooping) "Makra (LOOP)..." else "Macro...")
             .setView(dialogView)
-            .setNegativeButton("STOP") { _, _ -> macroManager.stop() }
+            .setNegativeButton(R.string.tvgone_stop) { _, _ -> macroManager.stop() }
             .setCancelable(false)
             .show()
 
-        macroManager.start(delay, isLooping, { cur, total, name ->
-            t1.text = "Komenda $cur / $total"
-            t2.text = "Wysyłam: $name"
+        macroManager.start(macro, { cur, total, name ->
+            t1.post {
+                t1.text = getString(R.string.macro_progress, cur, total)
+                t2.text = getString(R.string.macro_sending, name)
+            }
+        }, { cmd ->
+            addToRecent(cmd)
+            runOnUiThread { if (currentFolder == recentFolder) refreshList() }
         }, {
-            progressDialog.dismiss()
-            Toast.makeText(this, R.string.toast_macro_done, Toast.LENGTH_SHORT).show()
+            t1.post {
+                progressDialog.dismiss()
+                Toast.makeText(this, R.string.toast_macro_done, Toast.LENGTH_SHORT).show()
+            }
         })
+    }
+
+    private fun showMacroPickerForCommand(cmd: Command) {
+        val macros = macroManager.getAllMacros()
+        if (macros.isEmpty()) {
+            val m = MacroSet("MACRO 1")
+            m.commands.add(cmd)
+            macroManager.updateMacro(m)
+            Toast.makeText(this, "Dodano do MACRO 1", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val names = macros.map { it.name }.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle(R.string.btn_add_to_macro)
+            .setItems(names) { _, which ->
+                macros[which].commands.add(cmd)
+                macroManager.updateMacro(macros[which])
+                Toast.makeText(this, getString(R.string.toast_move_success, macros[which].name), Toast.LENGTH_SHORT).show()
+            }.show()
     }
 
     private fun showCommandPicker(folder: IrFolder, onPicked: (Command) -> Unit) {
@@ -459,41 +526,11 @@ class MainActivity : AppCompatActivity() {
                     onPicked(selected)
                 }
             }
-            .setNegativeButton("Wróć", null)
+            .setNegativeButton(R.string.dialog_cancel, null)
             .show()
     }
 
-    private fun showAcTurboDialog() {
-        val dialogView = LayoutInflater.from(this).inflate(android.R.layout.simple_list_item_2, null)
-        val text1 = dialogView.findViewById<TextView>(android.R.id.text1)
-        val text2 = dialogView.findViewById<TextView>(android.R.id.text2)
-
-        text1.text = "Tryb: Wbudowane (Turbo Mode)"
-        text2.text = "Gotowy do wysłania komend Turbo"
-
-        val dialog = AlertDialog.Builder(this)
-            .setTitle("AC Turbo: MAX COOLING")
-            .setView(dialogView)
-            .setPositiveButton("START", null)
-            .setNegativeButton("ZATRZYMAJ") { _, _ -> acTurboManager.stop() }
-            .show()
-
-        val startBtn = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
-
-        startBtn.setOnClickListener {
-            startBtn.isEnabled = false
-            acTurboManager.start({ current, total, name ->
-                text1.text = "Wysyłanie Turbo: $current / $total"
-                text2.text = "Kod: $name"
-            }, {
-                text1.text = "Zakończono!"
-                text2.text = "Wszystkie kody Turbo wysłane."
-                startBtn.isEnabled = true
-            })
-        }
-    }
-
-    private fun loadCustomAttack(uri: Uri, isAc: Boolean) {
+    private fun loadCustomAttack(uri: Uri) {
         try {
             contentResolver.openInputStream(uri)?.use { inputStream ->
                 val fileName = uri.lastPathSegment?.lowercase() ?: ""
@@ -512,15 +549,9 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 if (list.isNotEmpty()) {
-                    if (isAc) {
-                        acGoneManager.setAttackList(list)
-                        Toast.makeText(this, R.string.toast_signal_sent, Toast.LENGTH_SHORT).show()
-                        showAcGoneDialog()
-                    } else {
-                        tvBGoneManager.setAttackList(list)
-                        Toast.makeText(this, R.string.toast_signal_sent, Toast.LENGTH_SHORT).show()
-                        showTvBGoneDialog()
-                    }
+                    tvBGoneManager.setAttackList(list)
+                    Toast.makeText(this, R.string.toast_signal_sent, Toast.LENGTH_SHORT).show()
+                    showTvBGoneDialog()
                 } else {
                     Toast.makeText(this, "No IR codes found", Toast.LENGTH_SHORT).show()
                 }
@@ -537,278 +568,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showAddMenu() {
-        val ops = arrayOf(
-            getString(R.string.import_op_bruce_file),
-            getString(R.string.import_op_url),
-            getString(R.string.import_op_auto),
-            getString(R.string.import_op_webui_manual),
-            getString(R.string.import_op_folder),
-            getString(R.string.import_op_manual),
-            getString(R.string.import_op_export),
-            getString(R.string.import_op_import)
-        )
-        AlertDialog.Builder(this)
-            .setTitle(R.string.import_menu_title)
-            .setItems(ops) { _, w ->
-                when (w) {
-                    0 -> pickFile.launch("*/*")
-                    1 -> showImportUrlDialog()
-                    2 -> showAutoImportDialog()
-                    3 -> showWebUiImportDialog()
-                    4 -> showAddFolder()
-                    5 -> showAddManual()
-                    6 -> exportLauncher.launch("BruceIR_Backup.json")
-                    7 -> importFullDbLauncher.launch("application/json")
-                }
-            }.show()
-    }
-
-    private fun showWebUiImportDialog() {
-        val layout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(60, 40, 60, 10)
-        }
-        val inputUrl = EditText(this).apply { hint = "http://bruce.local"; setText("http://bruce.local") }
-        val inputPath = EditText(this).apply { hint = "/sd/tv.ir"; setText("/") }
-        val inputUser = EditText(this).apply { hint = "admin"; setText("admin") }
-        val inputPass = EditText(this).apply { hint = "bruce"; setText("bruce") }
-        
-        layout.addView(TextView(this).apply { text = "URL:" }); layout.addView(inputUrl)
-        layout.addView(TextView(this).apply { text = "Path:" }); layout.addView(inputPath)
-        layout.addView(TextView(this).apply { text = "User:" }); layout.addView(inputUser)
-        layout.addView(TextView(this).apply { text = "Pass:" }); layout.addView(inputPass)
-
-        AlertDialog.Builder(this)
-            .setTitle(R.string.import_op_webui_manual)
-            .setView(layout)
-            .setPositiveButton(R.string.remote_connect) { _, _ ->
-                val baseUrl = inputUrl.text.toString().trim().removeSuffix("/")
-                val filePath = inputPath.text.toString().trim()
-                fetchWebUiFile(baseUrl, filePath, inputUser.text.toString(), inputPass.text.toString())
-            }
-            .setNegativeButton(R.string.dialog_cancel, null)
-            .show()
-    }
-
-    private fun fetchWebUiFile(baseUrl: String, filePath: String, user: String, pass: String) {
-        Thread {
-            try {
-                var content = BruceUtils.downloadFileContent("$baseUrl/download?path=$filePath", user, pass)
-                if (content == null || !content.contains("name:")) {
-                    content = BruceUtils.downloadFileContent("$baseUrl/download?file=$filePath", user, pass)
-                }
-
-                if (content != null && content.contains("name:")) {
-                    val fileName = filePath.substringAfterLast("/").uppercase().replace(".IR", "")
-                    runOnUiThread { processIrContent(content, fileName) }
-                } else {
-                    runOnUiThread {
-                        Toast.makeText(this, "Error: Download failed or invalid format", Toast.LENGTH_LONG).show()
-                    }
-                }
-            } catch (e: Exception) {
-                runOnUiThread {
-                    Toast.makeText(this, "Bruce WebUI Error: ${e.message}", Toast.LENGTH_LONG).show()
-                }
-            }
-        }.start()
-    }
-
-    private fun showAutoImportDialog() {
-        val layout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(60, 40, 60, 10)
-        }
-        val inputUrl = EditText(this).apply { hint = "http://bruce.local"; setText("http://bruce.local") }
-        val inputUser = EditText(this).apply { hint = "admin"; setText("admin") }
-        val inputPass = EditText(this).apply { hint = "bruce"; setText("bruce") }
-        
-        layout.addView(TextView(this).apply { text = "URL:" }); layout.addView(inputUrl)
-        layout.addView(TextView(this).apply { text = "User:" }); layout.addView(inputUser)
-        layout.addView(TextView(this).apply { text = "Pass:" }); layout.addView(inputPass)
-
-        AlertDialog.Builder(this)
-            .setTitle(R.string.auto_import_title)
-            .setMessage(R.string.auto_import_desc)
-            .setView(layout)
-            .setPositiveButton(R.string.auto_import_scan) { _, _ ->
-                val baseUrl = inputUrl.text.toString().trim().removeSuffix("/")
-                startAutoImport(baseUrl, inputUser.text.toString(), inputPass.text.toString())
-            }
-            .setNegativeButton(R.string.dialog_cancel, null)
-            .show()
-    }
-
-    private fun startAutoImport(baseUrl: String, user: String, pass: String) {
-        val progressDialog = AlertDialog.Builder(this)
-            .setTitle("Auto-Import")
-            .setMessage("Łączenie z Bruce...")
-            .setCancelable(false)
-            .create()
-        progressDialog.show()
-
-        Thread {
-            try {
-                val allFiles = mutableListOf<String>()
-                val roots = listOf("/SD", "/LittleFS", "/", "/sd", "/ir", "/spiffs", "/data", "/fs", "/www", "/download", "/upload", "/flash", "/internal", "/codes")
-                
-                roots.forEach { p ->
-                    runOnUiThread { progressDialog.setMessage("Skanowanie: $p") }
-                    scanFiles(baseUrl, p, user, pass, allFiles)
-                }
-                
-                val irFiles = allFiles.filter { it.lowercase().endsWith(".ir") }.distinct()
-                
-                if (irFiles.isEmpty()) {
-                    runOnUiThread {
-                        progressDialog.dismiss()
-                        val msg = if (lastErrorCode == 404) 
-                            "Błąd 404: Twoje urządzenie Bruce ma inny interfejs WebUI (nie wspiera /list lub /fs). Spróbuj zaimportować pliki ręcznie przez Remote Connect."
-                            else if (lastErrorCode != 0 && lastErrorCode != 200) 
-                            "Błąd połączenia ($lastErrorCode: $lastErrorMsg). Sprawdź IP i Hasło." 
-                            else "Połączono, ale nie znaleziono żadnych plików .ir."
-                        AlertDialog.Builder(this@MainActivity).setTitle("Import nieudany").setMessage(msg).setPositiveButton("OK", null).show()
-                    }
-                    return@Thread
-                }
-
-                runOnUiThread { progressDialog.setMessage("Pobieranie ${irFiles.size} plików do DOWNLOADED...") }
-
-                var importedCount = 0
-                irFiles.forEach { filePath ->
-                    var content = BruceUtils.downloadFileContent("$baseUrl/download?path=$filePath", user, pass)
-                    if (content == null || !content.contains("name:")) {
-                        content = BruceUtils.downloadFileContent("$baseUrl/download?file=$filePath", user, pass)
-                    }
-
-                    if (content != null && content.contains("name:") && content.contains("data:")) {
-                        val fileName = filePath.substringAfterLast("/").uppercase()
-                        val commands = BruceUtils.parseIrContent(content)
-                        if (commands.isNotEmpty()) {
-                            downloadedFolder.items.add(IrFolder(fileName, commands.toMutableList() as MutableList<Any>))
-                            importedCount++
-                        }
-                    }
-                }
-
-                runOnUiThread {
-                    save()
-                    refreshList()
-                    progressDialog.dismiss()
-                    Toast.makeText(this, getString(R.string.toast_move_success, "DOWNLOADED") + " ($importedCount)", Toast.LENGTH_LONG).show()
-                }
-            } catch (e: Exception) {
-                runOnUiThread {
-                    progressDialog.dismiss()
-                    Toast.makeText(this, "Błąd krytyczny: ${e.message}", Toast.LENGTH_LONG).show()
-                }
-            }
-        }.start()
-    }
-
-    private fun scanFiles(baseUrl: String, dir: String, user: String, pass: String, fileList: MutableList<String>) {
-        val listUrls = mutableListOf(
-            "$baseUrl/list?dir=$dir", 
-            "$baseUrl/fs?dir=$dir", 
-            "$baseUrl/api/files?path=$dir",
-            "$baseUrl/api/list?dir=$dir",
-            "$baseUrl/files?dir=$dir",
-            "$baseUrl/explorer/list?dir=$dir",
-            "$baseUrl/api/v1/files?dir=$dir",
-            "$baseUrl/storage/list?path=$dir",
-            "$baseUrl/files/list?dir=$dir"
-        )
-        
-        // Obsługa specyficznego formatu z parametrem drive=SD
-        if (dir.startsWith("/SD", ignoreCase = true)) {
-            val pathOnly = dir.removePrefix("/SD").ifEmpty { "/" }
-            listUrls.add(0, "$baseUrl/list?drive=SD&path=${Uri.encode(pathOnly)}")
-            listUrls.add(1, "$baseUrl/fs?drive=SD&path=${Uri.encode(pathOnly)}")
-            listUrls.add(2, "$baseUrl/?drive=SD&path=${Uri.encode(pathOnly)}")
-        }
-
-        listUrls.forEach { url ->
-            val response = BruceUtils.downloadFileContent(url, user, pass) ?: return@forEach
-            
-            try {
-                // Sposób 1: JSON
-                if (response.trim().startsWith("[")) {
-                    val list = gson.fromJson<List<Map<String, Any>>>(response, object : TypeToken<List<Map<String, Any>>>() {}.type)
-                    list.forEach { item ->
-                        val name = (item["name"] ?: item["filename"] ?: item["text"]) as? String ?: ""
-                        if (name == "." || name == "..") return@forEach
-                        
-                        val type = (item["type"] as? String ?: "").lowercase()
-                        val isDir = (item["isDir"] as? Boolean) 
-                            ?: (item["isdir"] as? Boolean)
-                            ?: (type == "directory" || type == "dir" || type == "folder")
-                        
-                        val fullPath = if (dir.endsWith("/")) "$dir$name" else "$dir/$name"
-                        
-                        if (isDir) {
-                            scanFiles(baseUrl, fullPath, user, pass, fileList)
-                        } else if (name.lowercase().endsWith(".ir")) {
-                            fileList.add(fullPath)
-                        }
-                    }
-                } else if (response.contains("<li") || response.contains("<a href=")) {
-                    // Sposób 2: HTML
-                    val pattern = java.util.regex.Pattern.compile("href=\"([^\"]+)\"")
-                    val matcher = pattern.matcher(response)
-                    while (matcher.find()) {
-                        val link = matcher.group(1) ?: continue
-                        if (link.startsWith("?") || link.contains("..")) continue
-                        
-                        val name = link.removeSuffix("/").substringAfterLast("/")
-                        val isDir = link.endsWith("/")
-                        val fullPath = if (dir.endsWith("/")) "$dir$name" else "$dir/$name"
-                        
-                        if (isDir) {
-                            scanFiles(baseUrl, fullPath, user, pass, fileList)
-                        } else if (name.lowercase().endsWith(".ir")) {
-                            fileList.add(fullPath)
-                        }
-                    }
-                } else {
-                    // Sposób 3: Tekstowy
-                    response.lines().forEach { line ->
-                        val t = line.trim()
-                        if (t.isNotEmpty()) {
-                            val isDir = t.startsWith("D:") || t.contains("/") || !t.contains(".")
-                            val name = t.substringAfter(":").removePrefix("/")
-                            if (name == "." || name == "..") return@forEach
-                            
-                            val fullPath = if (dir.endsWith("/")) "$dir$name" else "$dir/$name"
-                            if (isDir) scanFiles(baseUrl, fullPath, user, pass, fileList)
-                            else if (name.lowercase().endsWith(".ir")) fileList.add(fullPath)
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                android.util.Log.e("BruceIR", "Error parsing scan response from $url", e)
-            }
-        }
-    }
-
-    private var lastErrorCode: Int = 0
-    private var lastErrorMsg: String = ""
-
     private fun showImportUrlDialog() {
         val input = EditText(this).apply { 
             hint = "https://raw.githubusercontent.com/.../file.ir"
             setText("https://raw.githubusercontent.com/MrMTi1/Bruce-IR/master/Ir_codes.json")
         }
         AlertDialog.Builder(this)
-            .setTitle("Importuj z URL")
+            .setTitle(R.string.import_op_url)
             .setView(input)
-            .setPositiveButton("Importuj") { _, _ ->
+            .setPositiveButton(getString(R.string.dialog_ok)) { _, _ ->
                 val url = input.text.toString().trim()
-                if (url.isNotEmpty()) {
-                    fetchAndImportIr(url)
-                }
+                if (url.isNotEmpty()) fetchAndImportIr(url)
             }
-            .setNegativeButton("Anuluj", null)
+            .setNegativeButton(R.string.dialog_cancel, null)
             .show()
     }
 
@@ -824,23 +596,14 @@ class MainActivity : AppCompatActivity() {
                 runOnUiThread {
                     if (finalUrl.endsWith(".json", ignoreCase = true)) {
                         try {
-                            val newRoot = BruceUtils.streamParseJson(content.reader())
-                            allData = newRoot
+                            allData = BruceUtils.streamParseJson(content.reader())
                             currentFolder = allData
-                            save()
-                            refreshList()
-                            Toast.makeText(this, "Pełny przywrócony z URL: ${allData.name}", Toast.LENGTH_SHORT).show()
-                        } catch (e: Exception) {
-                            processIrContent(content, fileName)
-                        }
-                    } else {
-                        processIrContent(content, fileName)
-                    }
+                            save { runOnUiThread { refreshList() } }
+                        } catch (e: Exception) { processIrContent(content, fileName) }
+                    } else { processIrContent(content, fileName) }
                 }
             } catch (e: Exception) {
-                runOnUiThread {
-                    Toast.makeText(this, "Błąd pobierania: ${e.message}", Toast.LENGTH_LONG).show()
-                }
+                runOnUiThread { Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_LONG).show() }
             }
         }.start()
     }
@@ -849,61 +612,46 @@ class MainActivity : AppCompatActivity() {
         val commands = BruceUtils.parseIrContent(content)
         if (commands.isNotEmpty()) {
             downloadedFolder.items.add(IrFolder(folderName, commands.toMutableList() as MutableList<Any>))
-            save()
-            refreshList()
+            save { runOnUiThread { refreshList() } }
             Toast.makeText(this, getString(R.string.toast_imported, "DOWNLOADED", folderName), Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(this, "No IR commands found", Toast.LENGTH_SHORT).show()
         }
     }
 
-    // --- LOGIKA EKSPORTU ---
     private fun performExport(uri: Uri) {
         try {
             val json = gson.toJson(allData)
-            contentResolver.openOutputStream(uri)?.use { 
-                it.write(json.toByteArray())
-            }
+            contentResolver.openOutputStream(uri)?.use { it.write(json.toByteArray()) }
             Toast.makeText(this, R.string.toast_export_success, Toast.LENGTH_SHORT).show()
-        } catch (e: Exception) {
-            Toast.makeText(this, "Błąd eksportu: ${e.message}", Toast.LENGTH_LONG).show()
-        }
+        } catch (e: Exception) {}
     }
 
-    // --- LOGIKA IMPORTU ---
     private fun performFullImport(uri: Uri) {
         try {
             contentResolver.openInputStream(uri)?.use { inputStream ->
-                val reader = inputStream.bufferedReader()
-                allData = BruceUtils.streamParseJson(reader)
+                allData = BruceUtils.streamParseJson(inputStream.bufferedReader())
                 currentFolder = allData
-                save()
-                refreshList()
+                save { runOnUiThread { refreshList() } }
             }
             Toast.makeText(this, R.string.toast_import_success, Toast.LENGTH_SHORT).show()
-        } catch (e: Exception) {
-            Toast.makeText(this, "Błąd importu bazy: ${e.message}", Toast.LENGTH_LONG).show()
-            android.util.Log.e("BruceIR", "Import OOM Fix Error", e)
-        }
+        } catch (e: Exception) {}
     }
 
     private fun load() {
         allData = BruceUtils.loadAllData(this)
         currentFolder = allData
-        
         recentFolder = allData.items.find { it is IrFolder && it.name == "RECENTLY USED" } as? IrFolder ?: IrFolder("RECENTLY USED").also { allData.items.add(0, it) }
         downloadedFolder = allData.items.find { it is IrFolder && it.name == "DOWNLOADED" } as? IrFolder ?: IrFolder("DOWNLOADED").also { allData.items.add(1, it) }
     }
 
-    private fun save() {
-         BruceUtils.saveAllData(this, allData)
+    private fun save(onDone: (() -> Unit)? = null) {
+         BruceUtils.saveAllData(this, allData, onDone)
     }
 
     private fun importBruceFile(uri: android.net.Uri) {
         try {
             contentResolver.openInputStream(uri)?.bufferedReader()?.use { r ->
                 val content = r.readText()
-                val fName = uri.lastPathSegment?.substringAfterLast("/")?.uppercase() ?: "IMPORT"
+                val fName = uri.lastPathSegment?.substringAfterLast("/")?.uppercase()?.replace(".IR", "") ?: "IMPORT"
                 processIrContent(content, fName)
             }
         } catch (e: Exception) {}
@@ -919,60 +667,45 @@ class MainActivity : AppCompatActivity() {
         }
         val copy = Command(cmd.name, cmd.frequency, cmd.pattern.copyOf())
         recentFolder.items.add(0, copy)
-        if (recentFolder.items.size > 10) {
-            recentFolder.items.removeAt(recentFolder.items.size - 1)
-        }
+        if (recentFolder.items.size > 10) recentFolder.items.removeAt(recentFolder.items.size - 1)
         save()
     }
 
     private fun refreshList() {
         adapter.updateList(currentFolder.items)
-        findViewById<TextView>(R.id.tvHeaderTitle).text = if (currentFolder == allData) "BruceIr By MTi" else currentFolder.name
+        findViewById<TextView>(R.id.tvHeaderTitle).text = if (currentFolder == allData) getString(R.string.header_title_root) else currentFolder.name
     }
 
     private fun showAddFolder() {
         val input = EditText(this).apply { hint = "Name" }
-        AlertDialog.Builder(this).setTitle("New Folder").setView(input).setPositiveButton("OK") { _, _ ->
+        AlertDialog.Builder(this).setTitle(R.string.dialog_new_folder).setView(input).setPositiveButton("OK") { _, _ ->
             currentFolder.items.add(IrFolder(input.text.toString().uppercase()))
-            save(); refreshList()
+            save { runOnUiThread { refreshList() } }
         }.show()
     }
 
     private fun showAddManual() {
         val nameIn = EditText(this).apply { hint = "Name" }
-        AlertDialog.Builder(this).setTitle("Manual Button").setView(nameIn).setPositiveButton("OK") { _, _ ->
+        AlertDialog.Builder(this).setTitle(R.string.dialog_manual_button).setView(nameIn).setPositiveButton("OK") { _, _ ->
             currentFolder.items.add(Command(nameIn.text.toString(), 38000, intArrayOf(100, 100)))
-            save(); refreshList()
+            save { runOnUiThread { refreshList() } }
         }.show()
     }
 
     private fun showEditCmd(cmd: Command, pos: Int) {
         val rootScroll = android.widget.ScrollView(this)
-        val lay = LinearLayout(this).apply { 
-            orientation = LinearLayout.VERTICAL
-            setPadding(60, 40, 60, 40) 
-        }
+        val lay = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(60, 40, 60, 40) }
         rootScroll.addView(lay)
-
         val nameIn = EditText(this).apply { setText(cmd.name) }
         val dataIn = EditText(this).apply { setText(cmd.pattern.joinToString(" ")) }
+        lay.addView(TextView(this).apply { text = getString(R.string.label_name) }); lay.addView(nameIn)
+        lay.addView(TextView(this).apply { text = getString(R.string.label_raw_data); setPadding(0, 20, 0, 0) }); lay.addView(dataIn)
         
-        lay.addView(TextView(this).apply { text = getString(R.string.label_name) })
-        lay.addView(nameIn)
-        lay.addView(TextView(this).apply { text = getString(R.string.label_raw_data); setPadding(0, 20, 0, 0) })
-        lay.addView(dataIn)
-        
-        // Separator
-        lay.addView(View(this).apply { layoutParams = LinearLayout.LayoutParams(-1, 2).apply { setMargins(0, 30, 0, 30) }; setBackgroundColor(Color.LTGRAY) })
-
         val btnIcon = Button(this).apply {
             text = getString(R.string.btn_change_icon, cmd.iconName ?: "AUTO")
             setOnClickListener {
                 val icons = arrayOf("AUTO", "POWER", "VOLUME", "MUTE", "PLAY", "PAUSE", "STOP", "UP", "DOWN", "LEFT", "RIGHT", "STAR", "HEART", "BRIGHTNESS", "CONTRAST", "HOME", "SETTINGS", "INFO", "CAMERA", "MIC", "SEARCH", "SEND", "LOCK", "UNLOCK", "LIGHT", "WIFI", "BATTERY", "AC", "FAN", "TV", "OK", "CANCEL", "PLUS", "MINUS")
-                AlertDialog.Builder(context).setItems(icons) { _, i ->
-                    cmd.iconName = if (i == 0) null else icons[i]
-                    this.text = getString(R.string.btn_change_icon, cmd.iconName ?: "AUTO")
-                }.show()
+                AlertDialog.Builder(context).setItems(icons) { _, i -> cmd.iconName = if (i == 0) null else icons[i]; this.text = getString(R.string.btn_change_icon, cmd.iconName ?: "AUTO") }.show()
             }
         }
         lay.addView(btnIcon)
@@ -990,10 +723,7 @@ class MainActivity : AppCompatActivity() {
         }
         lay.addView(btnColor)
 
-        val btnPin = Button(this).apply { 
-            text = getString(R.string.btn_pin)
-            setOnClickListener { pinShortcut(cmd) }
-        }
+        val btnPin = Button(this).apply { text = getString(R.string.btn_pin); setOnClickListener { pinShortcut(cmd) } }
         lay.addView(btnPin)
 
         val btnMove = Button(this).apply {
@@ -1004,12 +734,7 @@ class MainActivity : AppCompatActivity() {
 
         val btnAddMacro = Button(this).apply {
             text = getString(R.string.btn_add_to_macro)
-            setOnClickListener {
-                val macro = macroManager.getMacro()
-                macro.add(cmd)
-                macroManager.saveMacro(macro)
-                Toast.makeText(context, R.string.btn_add_to_macro, Toast.LENGTH_SHORT).show()
-            }
+            setOnClickListener { showMacroPickerForCommand(cmd) }
         }
         lay.addView(btnAddMacro)
 
@@ -1020,10 +745,12 @@ class MainActivity : AppCompatActivity() {
                 try {
                     cmd.name = nameIn.text.toString()
                     cmd.pattern = dataIn.text.toString().split(" ").filter { it.isNotEmpty() }.map { abs(it.trim().toInt()) }.toIntArray()
-                    save(); adapter.notifyItemChanged(pos)
+                    save { runOnUiThread { adapter.notifyItemChanged(pos) } }
                 } catch (e: Exception) {}
             }.setNegativeButton(R.string.dialog_delete) { _, _ ->
-                currentFolder.items.removeAt(pos); save(); adapter.notifyDataSetChanged()
+                confirmAction(R.string.confirm_delete_msg) {
+                    currentFolder.items.removeAt(pos); save { runOnUiThread { refreshList() } }
+                }
             }.show()
     }
 
@@ -1044,33 +771,23 @@ class MainActivity : AppCompatActivity() {
                     .build()
                 sm.requestPinShortcut(pinShortcutInfo, null)
             }
-        } else {
-            Toast.makeText(this, "Twoja wersja Androida nie wspiera przypinania skrótów.", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun showRenameFolder(f: IrFolder, pos: Int) {
-        val lay = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(60, 40, 60, 20) }
         val input = EditText(this).apply { setText(f.name) }
-        lay.addView(input)
-
-        val btnMove = Button(this).apply {
-            text = "PRZENIEŚ CAŁY FOLDER"
-            setOnClickListener { showMoveDialog(f, pos) }
-        }
-        lay.addView(btnMove)
-
-        AlertDialog.Builder(this).setTitle("Rename/Move").setView(lay).setPositiveButton("OK") { _, _ ->
-            f.name = input.text.toString().uppercase(); save(); adapter.notifyItemChanged(pos)
-        }.setNegativeButton("Delete") { _, _ ->
-            currentFolder.items.removeAt(pos); save(); adapter.notifyDataSetChanged()
+        AlertDialog.Builder(this).setTitle(R.string.dialog_rename).setView(input).setPositiveButton("OK") { _, _ ->
+            f.name = input.text.toString().uppercase(); save { runOnUiThread { adapter.notifyItemChanged(pos) } }
+        }.setNegativeButton(R.string.dialog_delete) { _, _ ->
+            confirmAction(R.string.confirm_delete_msg) {
+                currentFolder.items.removeAt(pos); save { runOnUiThread { refreshList() } }
+            }
         }.show()
     }
 
     private fun filterList(query: String) {
-        if (query.isEmpty()) {
-            adapter.updateList(currentFolder.items)
-        } else {
+        if (query.isEmpty()) adapter.updateList(currentFolder.items)
+        else {
             val filtered = mutableListOf<Any>()
             findInFolder(allData, query, filtered)
             adapter.updateList(filtered)
@@ -1079,9 +796,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun findInFolder(folder: IrFolder, query: String, results: MutableList<Any>) {
         folder.items.forEach {
-            if (it is Command) {
-                if (it.name.contains(query, ignoreCase = true)) results.add(it)
-            } else if (it is IrFolder) {
+            if (it is Command) { if (it.name.contains(query, ignoreCase = true)) results.add(it) }
+            else if (it is IrFolder) {
                 if (it.name.contains(query, ignoreCase = true)) results.add(it)
                 findInFolder(it, query, results)
             }
@@ -1091,42 +807,30 @@ class MainActivity : AppCompatActivity() {
     private fun showMoveDialog(item: Any, pos: Int) {
         val folders = mutableListOf<IrFolder>()
         findAllFolders(allData, folders)
-        
-        // Zabezpieczenie: usuń folder który przenosisz i jego podfoldery z listy celów
         if (item is IrFolder) {
             val toRemove = mutableListOf<IrFolder>()
             findSubfolders(item, toRemove)
             toRemove.add(item)
             folders.removeAll(toRemove)
         }
-
-        val names = folders.map { if (it == allData) "GLÓWNY (ROOT)" else it.name }.toTypedArray()
-        
+        val names = folders.map { if (it == allData) getString(R.string.folder_root) else it.name }.toTypedArray()
         AlertDialog.Builder(this)
-            .setTitle("Przenieś do folderu")
+            .setTitle(R.string.btn_move)
             .setItems(names) { d, which ->
                 val target = folders[which]
                 if (target != currentFolder) {
-                    currentFolder.items.removeAt(pos)
-                    target.items.add(item)
-                    save()
-                    refreshList()
-                    Toast.makeText(this, getString(R.string.toast_move_success, target.name), Toast.LENGTH_SHORT).show()
-                    d.dismiss()
-                } else {
-                    Toast.makeText(this, R.string.toast_already_there, Toast.LENGTH_SHORT).show()
+                    confirmAction(R.string.confirm_move_msg) {
+                        currentFolder.items.removeAt(pos)
+                        target.items.add(item)
+                        save { runOnUiThread { refreshList() } }
+                        Toast.makeText(this, getString(R.string.toast_move_success, target.name), Toast.LENGTH_SHORT).show()
+                    }
                 }
-            }
-            .show()
+            }.show()
     }
 
     private fun findSubfolders(root: IrFolder, list: MutableList<IrFolder>) {
-        root.items.forEach {
-            if (it is IrFolder) {
-                list.add(it)
-                findSubfolders(it, list)
-            }
-        }
+        root.items.forEach { if (it is IrFolder) { list.add(it); findSubfolders(it, list) } }
     }
 
     private fun findAllFolders(root: IrFolder, list: MutableList<IrFolder>) {
@@ -1146,80 +850,89 @@ class MainActivity : AppCompatActivity() {
         return null
     }
 
-        override fun onResume() {
+    override fun onResume() {
         super.onResume()
-        // Odśwież dane przy powrocie (np. z BruceRemoteActivity po pobraniu pliku)
         val oldFolderId = currentFolder.name
         load()
-        // Próbujemy wrócić do folderu, w którym byliśmy
         currentFolder = findFolderByName(allData, oldFolderId) ?: allData
         refreshList()
     }
 
     private fun findFolderByName(root: IrFolder, name: String): IrFolder? {
         if (root.name == name) return root
-        root.items.forEach {
-            if (it is IrFolder) {
-                val found = findFolderByName(it, name)
-                if (found != null) return found
-            }
-        }
+        root.items.forEach { if (it is IrFolder) { val found = findFolderByName(it, name); if (found != null) return found } }
         return null
     }
 
     private fun showInfoDialog() {
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_info, null)
         
+        val tvIrStatus = view.findViewById<TextView>(R.id.tvIrStatus)
+        val hasIr = transmitter.hasInternalIr()
+        tvIrStatus.text = if (hasIr) getString(R.string.ir_status_supported) else getString(R.string.ir_status_not_supported)
+        tvIrStatus.setTextColor(if (hasIr) Color.parseColor("#4CAF50") else Color.parseColor("#F44336"))
+
+        val tvUsbStatus = view.findViewById<TextView>(R.id.tvUsbStatus)
+        val hasUsb = transmitter.isUsbDeviceConnected()
+        tvUsbStatus.text = if (hasUsb) getString(R.string.usb_ir_status_connected) else getString(R.string.usb_ir_status_disconnected)
+        tvUsbStatus.setTextColor(if (hasUsb) Color.parseColor("#4CAF50") else Color.parseColor("#F44336"))
+
+        val btnChangeMode = view.findViewById<Button>(R.id.btnChangeMode)
+        btnChangeMode.text = "${getString(R.string.transmitter_mode_title)}: ${transmitter.currentMode.name}"
+        btnChangeMode.setOnClickListener {
+            val modes = IrTransmitter.Mode.values()
+            val modeNames = modes.map { if (it == IrTransmitter.Mode.INTERNAL) getString(R.string.mode_internal) else getString(R.string.mode_usb) }.toTypedArray()
+            AlertDialog.Builder(this)
+                .setTitle(R.string.transmitter_mode_title)
+                .setItems(modeNames) { _, i ->
+                    transmitter.currentMode = modes[i]
+                    btnChangeMode.text = "${getString(R.string.transmitter_mode_title)}: ${transmitter.currentMode.name}"
+                    Toast.makeText(this, "Tryb: ${modeNames[i]}", Toast.LENGTH_SHORT).show()
+                }.show()
+        }
+
+        val swSound = view.findViewById<com.google.android.material.materialswitch.MaterialSwitch>(R.id.swClickSound)
+        val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+        swSound.isChecked = prefs.getBoolean("click_sound", true)
+        swSound.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean("click_sound", isChecked).apply()
+            adapter.setSoundEnabled(isChecked)
+        }
+
         view.findViewById<TextView>(R.id.tvGithubLink).setOnClickListener {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/MrMTi1/Bruce-IR/blob/master/kody"))
-            startActivity(intent)
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/MrMTi1/Bruce-IR/blob/master")))
         }
-        
+
         view.findViewById<Button>(R.id.btnChangeLang).setOnClickListener {
-            val prefs = getSharedPreferences("settings", MODE_PRIVATE)
-            val currentLang = prefs.getString("lang", "en")
-            val newLang = if (currentLang == "pl") "en" else "pl"
-            
-            prefs.edit().putString("lang", newLang).apply()
-            
-            // Restart aplikacji, aby zastosować zmiany
-            val intent = Intent(this, SplashActivity::class.java)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-            startActivity(intent)
-            Runtime.getRuntime().exit(0)
+            val currentLocales = AppCompatDelegate.getApplicationLocales()
+            val newLocale = if (currentLocales.isEmpty || currentLocales.get(0)?.language == "en") {
+                "pl"
+            } else {
+                "en"
+            }
+            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(newLocale))
         }
-        
-        AlertDialog.Builder(this)
-            .setView(view)
-            .setPositiveButton(R.string.dialog_close, null)
-            .show()
+
+        AlertDialog.Builder(this).setView(view).setPositiveButton(R.string.dialog_close, null).show()
     }
 
     private fun showRemoteDialog() {
-        val layout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(50, 40, 50, 10)
-        }
+        val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(50, 40, 50, 10) }
         val inputUrl = EditText(this).apply { hint = "Device URL (e.g. http://192.168.1.100)"; setText("http://bruce.local") }
         val inputUser = EditText(this).apply { hint = "Username"; setText("admin") }
         val inputPass = EditText(this).apply { hint = "Password"; setText("bruce") }
-        
-        layout.addView(inputUrl)
-        layout.addView(inputUser)
-        layout.addView(inputPass)
+        layout.addView(inputUrl); layout.addView(inputUser); layout.addView(inputPass)
 
         AlertDialog.Builder(this)
-            .setTitle("Bruce Remote Connect")
+            .setTitle(R.string.remote_title)
             .setView(layout)
-            .setPositiveButton("Connect") { _, _ ->
+            .setPositiveButton(R.string.remote_connect) { _, _ ->
                 val intent = Intent(this, BruceRemoteActivity::class.java).apply {
-                    putExtra("url", inputUrl.text.toString())
-                    putExtra("user", inputUser.text.toString())
-                    putExtra("pass", inputPass.text.toString())
+                    putExtra("url", inputUrl.text.toString()); putExtra("user", inputUser.text.toString()); putExtra("pass", inputPass.text.toString())
                 }
                 startActivity(intent)
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(R.string.dialog_cancel, null)
             .show()
     }
 }

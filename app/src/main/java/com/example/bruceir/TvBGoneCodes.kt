@@ -23,24 +23,18 @@ object TvBGoneCodes {
         var bitOffset = 0
         
         repeat(raw.numPairs) {
-            var pulseIdx = 0
+            var valIdx = 0
             repeat(raw.bitCompression) {
-                val bit = (raw.codes[codeIndex].toInt() shr (7 - bitOffset)) and 1
-                pulseIdx = (pulseIdx shl 1) or bit
-                bitOffset++
-                if (bitOffset == 8) { bitOffset = 0; codeIndex++ }
+                if (codeIndex < raw.codes.size) {
+                    val bit = (raw.codes[codeIndex].toInt() shr (7 - bitOffset)) and 1
+                    valIdx = (valIdx shl 1) or bit
+                    bitOffset++
+                    if (bitOffset == 8) { bitOffset = 0; codeIndex++ }
+                }
             }
-            
-            var spaceIdx = 0
-            repeat(raw.bitCompression) {
-                val bit = (raw.codes[codeIndex].toInt() shr (7 - bitOffset)) and 1
-                spaceIdx = (spaceIdx shl 1) or bit
-                bitOffset++
-                if (bitOffset == 8) { bitOffset = 0; codeIndex++ }
+            if (valIdx < raw.times.size) {
+                resultPattern.add((raw.times[valIdx] * periodMicroseconds).toInt())
             }
-            
-            resultPattern.add((raw.times[pulseIdx] * periodMicroseconds).toInt())
-            resultPattern.add((raw.times[spaceIdx] * periodMicroseconds).toInt())
         }
         
         return IrCommand(raw.name, frequency, resultPattern.toIntArray())

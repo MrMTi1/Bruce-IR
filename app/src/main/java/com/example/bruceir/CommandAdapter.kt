@@ -32,11 +32,16 @@ class CommandAdapter(
     private val executor = Executors.newSingleThreadExecutor()
     private var isEditMode = false
     private var isListView = false
+    private var isSoundEnabled = true
     private val toneGen = try { ToneGenerator(AudioManager.STREAM_MUSIC, 100) } catch (e: Exception) { null }
 
     fun setEditMode(enabled: Boolean) {
         this.isEditMode = enabled
         notifyDataSetChanged()
+    }
+
+    fun setSoundEnabled(enabled: Boolean) {
+        this.isSoundEnabled = enabled
     }
 
     fun setListView(enabled: Boolean) {
@@ -146,7 +151,9 @@ class CommandAdapter(
             executor.execute {
                 try {
                     // Krótki beep
-                    toneGen?.startTone(ToneGenerator.TONE_PROP_ACK, 100)
+                    if (isSoundEnabled) {
+                        toneGen?.startTone(ToneGenerator.TONE_PROP_ACK, 100)
+                    }
                     
                     // Właściwa transmisja IR
                     irManager?.transmit(item.frequency, item.pattern)

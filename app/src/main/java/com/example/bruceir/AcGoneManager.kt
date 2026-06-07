@@ -1,14 +1,15 @@
 package com.example.bruceir
 
-import android.hardware.ConsumerIrManager
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 
-class AcGoneManager(private val irManager: ConsumerIrManager?) {
+class AcGoneManager(context: Context) {
 
     private var isRunning = false
     private val handler = Handler(Looper.getMainLooper())
     private var customAttackList: List<IrCommand>? = null
+    private val transmitter = IrTransmitter(context)
 
     fun setAttackList(list: List<IrCommand>) {
         this.customAttackList = list
@@ -27,7 +28,7 @@ class AcGoneManager(private val irManager: ConsumerIrManager?) {
                 val cmd = listToUse[i]
                 handler.post { onProgress(i + 1, listToUse.size, cmd.name) }
                 try {
-                    irManager?.transmit(cmd.frequency, cmd.pattern)
+                    transmitter.transmit(cmd.frequency, cmd.pattern)
                 } catch (e: Exception) {}
                 Thread.sleep(delay)
             }

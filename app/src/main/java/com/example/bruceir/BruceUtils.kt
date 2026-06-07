@@ -13,16 +13,20 @@ object BruceUtils {
     private val gson = Gson()
 
     fun downloadFileContent(url: String, user: String, pass: String): String? {
+        val data = downloadBinaryFile(url, user, pass) ?: return null
+        return String(data)
+    }
+
+    fun downloadBinaryFile(url: String, user: String, pass: String): ByteArray? {
         val finalUrl = if (!url.startsWith("http")) {
             if (url.startsWith("/")) "http://bruce.local$url"
             else "http://$url"
         } else url
         
-        Log.d("BruceIR", "Pobieranie z URL: $finalUrl")
+        Log.d("BruceIR", "Pobieranie binarne z URL: $finalUrl")
         return try {
             val connection = URL(finalUrl).openConnection() as HttpURLConnection
             
-            // Obsługa ciasteczek sesyjnych z WebView
             val cookies = android.webkit.CookieManager.getInstance().getCookie(finalUrl)
             if (cookies != null) {
                 connection.setRequestProperty("Cookie", cookies)
@@ -31,19 +35,12 @@ object BruceUtils {
             val auth = Base64.encodeToString("$user:$pass".toByteArray(), Base64.NO_WRAP)
             connection.setRequestProperty("Authorization", "Basic $auth")
             connection.setRequestProperty("User-Agent", "Mozilla/5.0")
-            connection.setRequestProperty("Accept", "*/*")
             connection.connectTimeout = 10000
-            connection.readTimeout = 10000
+            connection.readTimeout = 15000
             
-            val code = connection.responseCode
-            Log.d("BruceIR", "HTTP Response Code: $code")
-            
-            if (code == 200) {
-                val text = connection.inputStream.bufferedReader().use { it.readText() }
-                Log.d("BruceIR", "Pobrano ${text.length} znaków")
-                text
+            if (connection.responseCode == 200) {
+                connection.inputStream.readBytes()
             } else {
-                Log.e("BruceIR", "Błąd serwera (kod $code)")
                 null
             }
         } catch (e: Exception) {
@@ -85,7 +82,7 @@ object BruceUtils {
         return list
     }
 
-    fun saveAllData(context: Context, allData: IrFolder) {
+    fun saveAllData(context: Context, allData: IrFolder, onDone: (() -> Unit)? = null) {
         // Wykonujemy zapis w tle, aby nie blokować UI
         Thread {
             try {
@@ -111,6 +108,7 @@ object BruceUtils {
                     tempFile.copyTo(file, overwrite = true)
                     tempFile.delete()
                 }
+                onDone?.invoke()
             } catch (e: Exception) {
                 Log.e("BruceIR", "Save error: ${e.message}")
             }

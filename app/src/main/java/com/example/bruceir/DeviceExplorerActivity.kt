@@ -1,13 +1,17 @@
 package com.example.bruceir
 
+import android.media.MediaPlayer
+import android.net.Uri
 import android.os.Bundle
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import java.io.File
 import java.net.URLEncoder
 
 class DeviceExplorerActivity : AppCompatActivity() {
@@ -19,6 +23,17 @@ class DeviceExplorerActivity : AppCompatActivity() {
     private lateinit var user: String
     private lateinit var pass: String
     private val gson = Gson()
+    private var mediaPlayer: MediaPlayer? = null
+
+    override fun attachBaseContext(newBase: android.content.Context) {
+        val prefs = newBase.getSharedPreferences("settings", MODE_PRIVATE)
+        val lang = prefs.getString("lang", "en") ?: "en"
+        val locale = java.util.Locale(lang)
+        java.util.Locale.setDefault(locale)
+        val config = android.content.res.Configuration(newBase.resources.configuration)
+        config.setLocale(locale)
+        super.attachBaseContext(newBase.createConfigurationContext(config))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,8 +51,8 @@ class DeviceExplorerActivity : AppCompatActivity() {
         adapter = DeviceAdapter(emptyList()) { item ->
             if (item.isDir) {
                 loadPath(item.fullPath)
-            } else if (item.name.lowercase().endsWith(".ir")) {
-                downloadAndImport(item.fullPath)
+            } else {
+                handleFileAction(item)
             }
         }
         rv.adapter = adapter
@@ -49,7 +64,6 @@ class DeviceExplorerActivity : AppCompatActivity() {
         currentPath = path
         Thread {
             val encodedPath = URLEncoder.encode(path, "UTF-8")
-            // Próbujemy różnych punktów końcowych dla listy plików
             val endpoints = listOf(
                 "$baseUrl/list?drive=SD&path=$encodedPath",
                 "$baseUrl/list?dir=$encodedPath",
@@ -70,7 +84,7 @@ class DeviceExplorerActivity : AppCompatActivity() {
             }
 
             if (!success) {
-                runOnUiThread { Toast.makeText(this, "Nie udało się wczytać folderu", Toast.LENGTH_SHORT).show() }
+                runOnUiThread { Toast.makeText(this, "Load failed", Toast.LENGTH_SHORT).show() }
             }
         }.start()
     }
@@ -93,22 +107,56 @@ class DeviceExplorerActivity : AppCompatActivity() {
         return result
     }
 
-    private fun downloadAndImport(path: String) {
+    private fun handleFileAction(item: DeviceAdapter.BruceFile) {
+        val ext = item.name.substringAfterLast(".").lowercase()
         Thread {
-            val encodedPath = URLEncoder.encode(path, "UTF-8")
+            val encodedPath = URLEncoder.encode(item.fullPath, "UTF-8")
             val url = "$baseUrl/download?drive=SD&path=$encodedPath"
-            val content = BruceUtils.downloadFileContent(url, user, pass)
+            val data = BruceUtils.downloadBinaryFile(url, user, pass)
             
-            if (content != null && content.contains("name:")) {
+            if (data == null) {
+                runOnUiThread { Toast.makeText(this, "Download failed", Toast.LENGTH_SHORT).show() }
+                return@Thread
+            }
+
+            if (ext == "ir") {
+                val content = String(data)
                 val commands = BruceUtils.parseIrContent(content)
                 if (commands.isNotEmpty()) {
                     runOnUiThread {
-                        saveToDownloaded(path.substringAfterLast("/").uppercase().replace(".IR", ""), commands)
-                        Toast.makeText(this, "Zaimportowano!", Toast.LENGTH_SHORT).show()
+                        saveToDownloaded(item.name.uppercase().replace(".IR", ""), commands)
+                        Toast.makeText(this, "Imported!", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } else {
+                val file = File(getExternalFilesDir(null), item.name)
+                file.writeBytes(data)
+                runOnUiThread {
+                    if (ext == "wav") {
+                        showPlayDialog(file)
+                    } else {
+                        Toast.makeText(this, "Saved: ${item.name}", Toast.LENGTH_LONG).show()
                     }
                 }
             }
         }.start()
+    }
+
+    private fun showPlayDialog(file: File) {
+        AlertDialog.Builder(this)
+            .setTitle("Play Audio")
+            .setMessage("File: ${file.name}")
+            .setPositiveButton("Play") { _, _ ->
+                try {
+                    mediaPlayer?.release()
+                    mediaPlayer = MediaPlayer.create(this, Uri.fromFile(file))
+                    mediaPlayer?.start()
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Playback error", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Stop") { _, _ -> mediaPlayer?.stop() }
+            .show()
     }
 
     private fun saveToDownloaded(folderName: String, commands: List<Command>) {
@@ -116,5 +164,10 @@ class DeviceExplorerActivity : AppCompatActivity() {
         val downloadedFolder = allData.items.find { it is IrFolder && it.name == "DOWNLOADED" } as? IrFolder ?: IrFolder("DOWNLOADED").also { allData.items.add(it) }
         downloadedFolder.items.add(IrFolder(folderName, commands.toMutableList() as MutableList<Any>))
         BruceUtils.saveAllData(this, allData)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mediaPlayer?.release()
     }
 }

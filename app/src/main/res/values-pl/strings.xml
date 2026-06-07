@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">BruceIR</string>
-    <string name="header_title_root">BruceIr By MTi</string>
+    <string name="header_title_root">BruceIR</string>
     <string name="dialog_close">Zamknij</string>
     <string name="dialog_import_ir">Importuj plik .ir</string>
     <string name="dialog_new_folder">Nowy Folder</string>
@@ -28,61 +28,66 @@
     <string name="toast_move_success">Przeniesiono do %1$s</string>
     <string name="toast_already_there">Już jesteś w tym folderze</string>
 
-    <string name="tvgone_title">TV-B-Gone: PEŁNA MOC</string>
+    <string name="tvgone_title">TV-B-Gone</string>
     <string name="tvgone_mode">Tryb: Wbudowane kody</string>
     <string name="tvgone_ready">Gotowy do ataku (Power OFF)</string>
     <string name="tvgone_progress">Atak: %1$d / %2$d</string>
     <string name="tvgone_code">Kod: %1$s</string>
     <string name="tvgone_finished">Atak zakończony!</string>
+    <string name="tvgone_start">START</string>
+    <string name="tvgone_stop">STOP</string>
+    <string name="tvgone_load_file">WCZYTAJ PLIK .IR</string>
 
-    <string name="acgone_title">AC-Gone</string>
-    <string name="acgone_ready">Gotowy do ataku na AC</string>
-    <string name="acgone_progress">Atak AC: %1$d / %2$d</string>
-    <string name="acgone_finished_msg">Wszystkie kody AC wysłane.</string>
-    <string name="acgone_turbo_on">TURBO: ON</string>
-    <string name="acgone_turbo_off">TURBO: OFF</string>
-    <string name="acgone_mode_standard">Tryb: Wbudowane (Standard 500ms)</string>
-    <string name="acgone_mode_turbo">Tryb: Wbudowane (TURBO 150ms)</string>
-
-    <string name="macro_title">IR MACRO (Sekwencja)</string>
+    <string name="macro_title">IR MACRO</string>
     <string name="macro_empty">(Pusta lista - dodaj komendy)</string>
-    <string name="macro_start">ODPAL MAKRO</string>
-    <string name="macro_add">DODAJ KOMENDĘ</string>
+    <string name="macro_start">ODPAL</string>
+    <string name="macro_add">DODAJ</string>
     <string name="macro_clear">WYCZYŚĆ</string>
-    <string name="macro_executing">Wykonywanie Makra…</string>
+    <string name="macro_config">USTAWIENIA</string>
     <string name="macro_progress">Komenda %1$d / %2$d</string>
     <string name="macro_sending">Wysyłam: %1$s</string>
+    <string name="macro_loop">Zapętlij</string>
+    <string name="macro_delay">Opóźnienie (ms):</string>
+    <string name="macro_rename">Zmień nazwę makra</string>
+    <string name="macro_delete_all">Usuń całe makro</string>
+    <string name="macro_move_up">Przesuń w górę</string>
+    <string name="macro_move_down">Przesuń w dół</string>
+    <string name="macro_remove_item">Usuń</string>
+    <string name="macro_select">Wybierz Makro</string>
+    <string name="macro_new">Nowe Makro</string>
 
     <string name="import_menu_title">Zarządzanie</string>
     <string name="import_op_bruce_file">Wczytaj plik .ir (Bruce)</string>
     <string name="import_op_url">Importuj z URL</string>
-    <string name="import_op_auto">AUTO-IMPORT z Bruce WebUI</string>
-    <string name="import_op_webui_manual">Import z Bruce (Ręcznie)</string>
     <string name="import_op_folder">Nowy Folder</string>
     <string name="import_op_manual">Przycisk Ręcznie</string>
     <string name="import_op_export">EKSPORTUJ BAZĘ (Backup)</string>
     <string name="import_op_import">IMPORTUJ BAZĘ (Przywróć)</string>
-
-    <string name="auto_import_title">Auto-Import z Bruce</string>
-    <string name="auto_import_desc">Aplikacja przeszuka całe urządzenie i pobierze wszystkie pliki .ir.</string>
-    <string name="auto_import_scan">Skanuj i Pobierz</string>
-    <string name="auto_import_connecting">Łączenie z Bruce…</string>
-    <string name="auto_import_scanning">Skanowanie: %1$s</string>
-    <string name="auto_import_downloading">Pobieranie %1$d plików do DOWNLOADED…</string>
 
     <string name="search_hint">Szukaj przycisków…</string>
     <string name="folder_root">GŁÓWNY (ROOT)</string>
     <string name="remote_title">Bruce Remote Connect</string>
     <string name="remote_connect">Połącz</string>
 
-    <string name="info_title">BruceIR By MTi</string>
-    <string name="info_version">Wersja 2.0 (Wielka Aktualizacja)</string>
-    <string name="info_desc">Potężne narzędzie dla entuzjastów IR i profesjonalistów.\n\n• TV-B-Gone &amp; AC-Gone: Masowe wyłączanie z aktualną listą kodów.\n• AC Turbo: Tryb szybkiej sekwencji 150ms.\n• IR Macro: Twórz własne automatyczne sekwencje komend.\n• Auto-Import: Rekurencyjne skanowanie i pobieranie plików .ir z urządzeń Bruce przez WiFi.\n• Bruce Remote: Sterowanie i import plików przez integrację WebUI.\n• Inteligentne Foldery: Organizuj tysiące kodów dzięki wsparciu dla podfolderów.\n• Lux Meter: Sprawdzaj natężenie światła otoczenia.</string>
-    <string name="info_github">Repozytorium Kodów IR (GitHub)</string>
-    <string name="info_change_lang">Zmień Język (PL/EN)</string>
+    <string name="info_title">BruceIR</string>
+    <string name="info_version">Wersja 2.5</string>
+    <string name="info_desc">Potężne narzędzie dla entuzjastów IR.\n\n• TV-B-Gone: Masowe wyłączanie z aktualną listą kodów.\n• IR Macro: Automatyczne sekwencje z zapętlaniem.\n• Bruce Remote: Integracja z WebUI i obsługa plików binarnych (.wav, .ir, itp).\n• USB OTG: Wsparcie dla zewnętrznych adapterów IR (CH340/CP2102/FTDI).\n• Smart Folders: Organizacja folderów.\n• Lux Meter: Sprawdzanie natężenia światła.</string>
+    <string name="info_github">Oficjalne Repozytorium GitHub</string>
+    <string name="info_change_lang">Zmień język (PL/EN)</string>
 
     <string name="lux_dark">Ciemno</string>
     <string name="lux_indoor">Wewnątrz</string>
     <string name="lux_overcast">Pochmurno</string>
     <string name="lux_sunlight">Bezpośrednie słońce</string>
+    <string name="ir_status_supported">WEWNĘTRZNE IR OBSŁUGIWANE ✅</string>
+    <string name="ir_status_not_supported">BRAK WEWNĘTRZNEGO IR ❌</string>
+    <string name="usb_ir_status_connected">ADAPTER USB IR PODŁĄCZONY ✅</string>
+    <string name="usb_ir_status_disconnected">NIE WYKRYTO ADAPTERA USB ❌</string>
+    <string name="transmitter_mode_title">Tryb Nadajnika</string>
+    <string name="mode_internal">Wewnętrzne IR</string>
+    <string name="mode_usb">Adapter USB OTG</string>
+    <string name="settings_click_sound">Dźwięki kliknięć</string>
+    <string name="confirm_title">Potwierdź operację</string>
+    <string name="confirm_delete_msg">Czy na pewno chcesz usunąć ten element?</string>
+    <string name="confirm_move_msg">Czy na pewno chcesz przenieść ten element?</string>
 </resources>

@@ -43,6 +43,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.recyclerview)
     implementation("com.google.code.gson:gson:2.10.1")
+    implementation("com.github.mik3y:usb-serial-for-android:3.8.0")
     
     // Compose
     implementation(platform(libs.androidx.compose.bom))

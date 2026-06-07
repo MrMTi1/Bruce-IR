@@ -31,10 +31,9 @@ class DeviceAdapter(
     override fun onBindViewHolder(holder: VH, position: Int) {
         val item = items[position]
         holder.text1.text = item.name
-        holder.text2.text = if (item.isDir) "[FOLDER]" else "[FILE]"
         
-        val iconRes = if (item.isDir) android.R.drawable.ic_menu_gallery else android.R.drawable.ic_menu_save
-        // Note: Using standard android icons for simplicity in this step
+        val ext = item.name.substringAfterLast(".").lowercase()
+        holder.text2.text = if (item.isDir) "[FOLDER]" else "[${ext.uppercase()}]"
         
         holder.itemView.setOnClickListener { onClick(item) }
     }

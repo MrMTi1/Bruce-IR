@@ -1,13 +1,22 @@
 package com.example.bruceir
 
+import android.media.MediaPlayer
+import android.net.Uri
 import android.os.Bundle
+import android.util.Base64
 import android.webkit.*
 import android.widget.ImageButton
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import java.io.File
+import java.net.URI
+import java.net.URLDecoder
 
 class BruceRemoteActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
+    private var mediaPlayer: MediaPlayer? = null
 
     override fun attachBaseContext(newBase: android.content.Context) {
         val prefs = newBase.getSharedPreferences("settings", MODE_PRIVATE)
@@ -27,9 +36,8 @@ class BruceRemoteActivity : AppCompatActivity() {
         val user = intent.getStringExtra("user") ?: "admin"
         val pass = intent.getStringExtra("pass") ?: "bruce"
 
-        // Wyciągamy bazowy adres (host), aby móc budować poprawne linki pobierania
         val baseUrl = try {
-            val uri = java.net.URI(initialUrl)
+            val uri = URI(initialUrl)
             "${uri.scheme}://${uri.host}${if (uri.port != -1) ":${uri.port}" else ""}"
         } catch (e: Exception) {
             initialUrl.removeSuffix("/")
@@ -46,84 +54,86 @@ class BruceRemoteActivity : AppCompatActivity() {
         webView.settings.allowContentAccess = true
         
         webView.webViewClient = object : WebViewClient() {
-            override fun onReceivedHttpAuthRequest(
-                view: WebView?,
-                handler: HttpAuthHandler?,
-                host: String?,
-                realm: String?
-            ) {
+            override fun onReceivedHttpAuthRequest(view: WebView?, handler: HttpAuthHandler?, host: String?, realm: String?) {
                 handler?.proceed(user, pass)
             }
 
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
-                val requestUrl = request?.url?.toString() ?: ""
-                android.util.Log.d("BruceIR", "Próba załadowania URL: $requestUrl")
-                if (requestUrl.contains("/download")) {
-                    // Naprawiamy URL jeśli jest relatywny
-                    val finalDownloadUrl = if (requestUrl.startsWith("/")) "$baseUrl$requestUrl" else requestUrl
-                    handleManualDownload(finalDownloadUrl, user, pass)
+                val url = request?.url?.toString() ?: ""
+                if (url.contains("/download")) {
+                    val finalUrl = if (url.startsWith("/")) "$baseUrl$url" else url
+                    handleGenericDownload(finalUrl, user, pass)
                     return true 
                 }
                 return false
             }
-
-            override fun onPageFinished(view: WebView?, url: String?) {
-                super.onPageFinished(view, url)
-                view?.loadUrl("javascript:(function() { " +
-                    "document.addEventListener('click', function(e) {" +
-                    "  var target = e.target.closest('a');" +
-                    "  if (target && target.href.indexOf('/download') !== -1) {" +
-                    "    e.preventDefault();" +
-                    "    window.location.href = target.href;" +
-                    "  }" +
-                    "}, true);" +
-                    "})()")
-            }
         }
         
         webView.setDownloadListener { downloadUrl, _, _, _, _ ->
-            val finalDownloadUrl = if (downloadUrl.startsWith("/")) "$baseUrl$downloadUrl" else downloadUrl
-            handleManualDownload(finalDownloadUrl, user, pass)
+            val finalUrl = if (downloadUrl.startsWith("/")) "$baseUrl$downloadUrl" else downloadUrl
+            handleGenericDownload(finalUrl, user, pass)
         }
         
-        val auth = android.util.Base64.encodeToString("$user:$pass".toByteArray(), android.util.Base64.NO_WRAP)
+        val auth = Base64.encodeToString("$user:$pass".toByteArray(), Base64.NO_WRAP)
         val headers = mapOf("Authorization" to "Basic $auth")
         webView.loadUrl(initialUrl, headers)
     }
 
-    private fun handleManualDownload(url: String, user: String, pass: String) {
-        // Ulepszona próba wyciągnięcia nazwy pliku z parametrów URL (np. name=... lub file=...)
-        val decodedUrl = java.net.URLDecoder.decode(url, "UTF-8")
+    private fun handleGenericDownload(url: String, user: String, pass: String) {
+        val decodedUrl = URLDecoder.decode(url, "UTF-8")
         val fileName = when {
             decodedUrl.contains("name=") -> decodedUrl.substringAfter("name=").substringAfterLast("/").substringBefore("&")
             decodedUrl.contains("file=") -> decodedUrl.substringAfter("file=").substringAfterLast("/").substringBefore("&")
             else -> decodedUrl.substringBefore("?").substringAfterLast("/")
-        }.uppercase().replace(".IR", "")
-
-        val finalFileName = if (fileName.isBlank() || fileName.contains("DOWNLOAD")) "IMPORT_BRUCE" else fileName
+        }
 
         Thread {
-            val content = BruceUtils.downloadFileContent(url, user, pass)
-            android.util.Log.d("BruceIR", "Pobrano treść pliku ($finalFileName): $content")
-            
-            if (content != null && content.contains("name:")) {
+            val data = BruceUtils.downloadBinaryFile(url, user, pass)
+            if (data == null) {
+                runOnUiThread { Toast.makeText(this, "Download failed", Toast.LENGTH_SHORT).show() }
+                return@Thread
+            }
+
+            if (fileName.lowercase().endsWith(".ir")) {
+                val content = String(data)
                 val commands = BruceUtils.parseIrContent(content)
                 if (commands.isNotEmpty()) {
                     runOnUiThread {
-                        importToDownloaded(finalFileName, commands)
-                        android.widget.Toast.makeText(this, getString(R.string.toast_imported, "DOWNLOADED", finalFileName), android.widget.Toast.LENGTH_SHORT).show()
-                    }
-                } else {
-                    runOnUiThread {
-                        android.widget.Toast.makeText(this, "Error: No commands found in $finalFileName", android.widget.Toast.LENGTH_SHORT).show()
+                        importToDownloaded(fileName.uppercase().replace(".IR", ""), commands)
+                        Toast.makeText(this, "Imported: $fileName", Toast.LENGTH_SHORT).show()
                     }
                 }
             } else {
+                // Save to local file
+                val file = File(getExternalFilesDir(null), fileName)
+                file.writeBytes(data)
+                
                 runOnUiThread {
-                    android.widget.Toast.makeText(this, "Error: Invalid .ir file format", android.widget.Toast.LENGTH_SHORT).show()
+                    if (fileName.lowercase().endsWith(".wav")) {
+                        showPlayDialog(file)
+                    } else {
+                        Toast.makeText(this, "Saved: $fileName", Toast.LENGTH_LONG).show()
+                    }
                 }
             }
         }.start()
+    }
+
+    private fun showPlayDialog(file: File) {
+        AlertDialog.Builder(this)
+            .setTitle("Audio File")
+            .setMessage("Play ${file.name}?")
+            .setPositiveButton("Play") { _, _ ->
+                try {
+                    mediaPlayer?.release()
+                    mediaPlayer = MediaPlayer.create(this, Uri.fromFile(file))
+                    mediaPlayer?.start()
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Error playing audio", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Close") { _, _ -> mediaPlayer?.stop() }
+            .show()
     }
 
     private fun importToDownloaded(folderName: String, commands: List<Command>) {
@@ -135,6 +145,11 @@ class BruceRemoteActivity : AppCompatActivity() {
         }
         downloadedFolder.items.add(IrFolder(folderName, commands.toMutableList() as MutableList<Any>))
         BruceUtils.saveAllData(this, allData)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mediaPlayer?.release()
     }
 
     override fun onBackPressed() {

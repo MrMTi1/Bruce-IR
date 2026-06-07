@@ -20,7 +20,7 @@
             android:id="@+id/tvInfoTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="BruceIR By MTi"
+            android:text="@string/info_title"
             android:textColor="#2196F3"
             android:textSize="22sp"
             android:textStyle="bold" />
@@ -29,16 +29,50 @@
             android:id="@+id/tvInfoVersion"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Version 2.0 (Massive Update)"
+            android:text="@string/info_version"
             android:textSize="12sp"
             android:alpha="0.7" />
+
+        <TextView
+            android:id="@+id/tvIrStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="IR Status: Checking..."
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvUsbStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="USB Status: Checking..."
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btnChangeMode"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/transmitter_mode_title" />
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swClickSound"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/settings_click_sound"
+            android:checked="true" />
 
         <TextView
             android:id="@+id/tvInfoDesc"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:text="The ultimate tool for IR enthusiasts and professional users.\n\n• TV-B-Gone &amp; AC-Gone: Mass shutdown with updated code lists.\n• AC Turbo: High-speed 150ms sequence mode.\n• IR Macro: Build your own automated command sequences.\n• Auto-Import: Recursively scan and download .ir files from Bruce devices over WiFi.\n• Bruce Remote: Control and import files via WebUI integration.\n• Smart Folders: Organize thousands of codes with nested folder support.\n• Lux Meter: Check ambient light intensity."
+            android:text="@string/info_desc"
             android:textAlignment="center"
             android:textColor="?attr/colorOnSurface"
             android:textSize="14sp" />
@@ -48,7 +82,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="IR Codes Repository (GitHub)"
+            android:text="@string/info_github"
             android:textColor="#2196F3"
             android:textSize="14sp"
             android:textStyle="bold"
@@ -60,7 +94,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Change Language (PL/EN)" />
+            android:text="@string/info_change_lang" />
 
     </LinearLayout>
 </ScrollView>
