@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.BruceIR" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">#2196F3</item>
+        <item name="colorPrimary">#90CAF9</item>
         <item name="colorPrimaryDark">#1976D2</item>
-        <item name="colorAccent">#FF4081</item>
-        <item name="android:windowBackground">?attr/colorSurface</item>
+        <item name="colorAccent">#F48FB1</item>
+        <item name="android:windowBackground">#121212</item>
     </style>
 </resources>

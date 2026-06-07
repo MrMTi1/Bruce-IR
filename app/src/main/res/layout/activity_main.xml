@@ -3,52 +3,155 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F0F2F5"
+    android:background="?android:attr/windowBackground"
     android:fitsSystemWindows="true">
 
     <LinearLayout
         android:id="@+id/header"
         android:layout_width="match_parent"
-        android:layout_height="75dp"
-        android:background="#FFFFFF"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorSurface"
         android:elevation="4dp"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="16dp">
+        android:orientation="vertical"
+        android:padding="8dp">
 
-        <TextView
-            android:id="@+id/tvHeaderTitle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="BruceIr By MTi"
-            android:textColor="#2196F3"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+        <!-- Pierwszy rząd: Logo, Tytuł i Przyciski Systemowe -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-        <ImageButton
-            android:id="@+id/btnLock"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_marginEnd="8dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_secure"
-            app:tint="#444444" />
+            <ImageView
+                android:id="@+id/ivLogo"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/bruceirbymti"
+                android:layout_marginEnd="8dp"
+                android:scaleType="centerInside"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackgroundBorderless" />
 
-        <ImageButton
-            android:id="@+id/btnInfo"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@android:drawable/ic_menu_info_details"
-            app:tint="#2196F3" />
+            <TextView
+                android:id="@+id/tvHeaderTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="BruceIr By MTi"
+                android:textColor="#2196F3"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btnSearch"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_search"
+                app:tint="#444444" />
+
+            <ImageButton
+                android:id="@+id/btnViewMode"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_sort_by_size"
+                app:tint="#444444" />
+
+            <ImageButton
+                android:id="@+id/btnLock"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_secure"
+                app:tint="#444444" />
+        </LinearLayout>
+
+        <!-- Drugi rząd: Funkcje Ataku / Narzędzia -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btnAcGone"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_lock_power_off"
+                app:tint="#03A9F4" />
+
+            <ImageButton
+                android:id="@+id/btnAcTurbo"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_send"
+                app:tint="#E91E63" />
+
+            <ImageButton
+                android:id="@+id/btnTvBGone"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_lock_power_off"
+                app:tint="#F44336" />
+
+            <ImageButton
+                android:id="@+id/btnRemote"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_send"
+                app:tint="#4CAF50" />
+
+            <ImageButton
+                android:id="@+id/btnMacro"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_agenda"
+                app:tint="#9C27B0" />
+
+            <ImageButton
+                android:id="@+id/btnLux"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_view"
+                app:tint="#FFC107" />
+        </LinearLayout>
     </LinearLayout>
+
+    <EditText
+        android:id="@+id/etSearch"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_below="@id/header"
+        android:background="?attr/colorSurface"
+        android:textColor="?attr/colorOnSurface"
+        android:drawableStart="@android:drawable/ic_menu_search"
+        android:drawablePadding="12dp"
+        android:elevation="2dp"
+        android:hint="Szukaj przycisków..."
+        android:padding="10dp"
+        android:singleLine="true"
+        android:textSize="14sp"
+        android:visibility="gone" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/header"
+        android:layout_below="@id/etSearch"
         android:padding="8dp"
         android:clipToPadding="false" />
 
@@ -62,5 +165,4 @@
         android:src="@android:drawable/ic_input_add"
         app:backgroundTint="#2196F3"
         app:tint="#FFFFFF" />
-
 </RelativeLayout>

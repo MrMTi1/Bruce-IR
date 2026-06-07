@@ -3,34 +3,46 @@ package com.example.bruceir
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
 class DeviceAdapter(
-    private val devices: List<Device>,
-    private val listener: OnDeviceClickListener
+    private var items: List<BruceFile>,
+    private val onClick: (BruceFile) -> Unit
 ) : RecyclerView.Adapter<DeviceAdapter.VH>() {
 
-    interface OnDeviceClickListener {
-        fun onDeviceClick(device: Device)
-    }
+    data class BruceFile(
+        val name: String,
+        val isDir: Boolean,
+        val fullPath: String
+    )
 
-    class VH(view: View) : RecyclerView.ViewHolder(view) {
-        val tvName: TextView = view.findViewById(R.id.tvDeviceName)
-        val tvInfo: TextView = view.findViewById(R.id.tvDeviceInfo)
+    fun updateList(newList: List<BruceFile>) {
+        items = newList
+        notifyDataSetChanged()
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
-        val v = LayoutInflater.from(parent.context).inflate(R.layout.item_device, parent, false)
+        val v = LayoutInflater.from(parent.context).inflate(android.R.layout.simple_list_item_2, parent, false)
         return VH(v)
     }
 
-    override fun getItemCount(): Int = devices.size
-
     override fun onBindViewHolder(holder: VH, position: Int) {
-        val device = devices[position]
-        holder.tvName.text = device.name
-        holder.tvInfo.text = "${device.commands.size} komend"
-        holder.itemView.setOnClickListener { listener.onDeviceClick(device) }
+        val item = items[position]
+        holder.text1.text = item.name
+        holder.text2.text = if (item.isDir) "[FOLDER]" else "[FILE]"
+        
+        val iconRes = if (item.isDir) android.R.drawable.ic_menu_gallery else android.R.drawable.ic_menu_save
+        // Note: Using standard android icons for simplicity in this step
+        
+        holder.itemView.setOnClickListener { onClick(item) }
+    }
+
+    override fun getItemCount() = items.size
+
+    class VH(v: View) : RecyclerView.ViewHolder(v) {
+        val text1: TextView = v.findViewById(android.R.id.text1)
+        val text2: TextView = v.findViewById(android.R.id.text2)
     }
 }
