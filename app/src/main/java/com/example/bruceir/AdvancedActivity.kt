@@ -65,6 +65,28 @@ class AdvancedActivity : AppCompatActivity() {
             }.start()
         }
 
+        // Trojan Agent Dashboard logic
+        findViewById<Button>(R.id.btnAgentTrigger).setOnClickListener {
+            Thread {
+                // Command to remote Bruce via C2
+                val url = "$baseUrl/bridge/exec?cmd=ir_panic"
+                BruceUtils.downloadFileContent(url, user, pass)
+                runOnUiThread { Toast.makeText(this, getString(R.string.agent_command_sent), Toast.LENGTH_SHORT).show() }
+            }.start()
+        }
+
+        findViewById<Button>(R.id.btnAgentFetchLogs).setOnClickListener {
+            Thread {
+                val url = "$baseUrl/bridge/exfil"
+                val data = BruceUtils.downloadFileContent(url, user, pass)
+                runOnUiThread {
+                    if (data != null) {
+                        AlertDialog.Builder(this).setTitle("Exfiltrated Data").setMessage(data).setPositiveButton("OK", null).show()
+                    }
+                }
+            }.start()
+        }
+
         // nRF24 Section
         findViewById<Button>(R.id.btnNrfScan).setOnClickListener {
             findViewById<TextView>(R.id.tvNrfResults).text = "Scanning..."

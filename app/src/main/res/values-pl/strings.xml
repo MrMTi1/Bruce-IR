@@ -113,17 +113,12 @@
     <string name="advanced_nrf_discovered">Wykryto: </string>
     <string name="advanced_nrf_payload_hint">Ducky Script / Komendy</string>
     <string name="advanced_nrf_inject">WSTRZYKNIJ PAYLOAD</string>
-    <string name="bt_remote_title">Pilot Bluetooth HID</string>
-    <string name="bt_media_play">ODTWÓRZ/PAUZA</string>
-    <string name="bt_media_next">NASTĘPNY</string>
-    <string name="bt_media_prev">POPRZEDNI</string>
-    <string name="bt_volume_up">GŁOŚNOŚĆ +</string>
-    <string name="bt_volume_down">GŁOŚNOŚĆ -</string>
-    <string name="bt_camera_shutter">MIGAWKA (Selfie)</string>
+
     <string name="net_scanner_title">Skaner Sieci (Bez Roota)</string>
     <string name="net_scanner_scan">SKANUJ SIEĆ LOKALNĄ</string>
-    <string name="net_scanner_scanning">Skanowanie adresów 1-254...</string>
+    <string name="net_scanner_scanning">Skanowanie adresów 1-254…</string>
     <string name="net_scanner_found">Znaleziono hostów: %1$d</string>
+
     <string name="nav_title">Nawigator Bruce</string>
     <string name="nav_up">GÓRA</string>
     <string name="nav_down">DÓŁ</string>
@@ -131,4 +126,9 @@
     <string name="nav_right">PRAWO</string>
     <string name="nav_ok">OK</string>
     <string name="nav_back">WSTECZ</string>
+
+    <string name="agent_status_online">AGENT ONLINE</string>
+    <string name="agent_status_offline">AGENT OFFLINE</string>
+    <string name="agent_last_seen">Ostatnio widziany: %1$s</string>
+    <string name="agent_command_sent">Polecenie wysłane do agenta</string>
 </resources>

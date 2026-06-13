@@ -152,6 +152,60 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
+        <!-- Sekcja Trojan Agent Control -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            style="@style/Widget.Material3.CardView.Elevated">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Trojan Agent Dashboard"
+                    android:textStyle="bold"
+                    android:textColor="#E91E63"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical">
+                    <View
+                        android:id="@+id/vAgentStatus"
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:background="@android:color/darker_gray"
+                        android:layout_marginEnd="8dp"/>
+                    <TextView
+                        android:id="@+id/tvAgentStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/agent_status_offline"
+                        android:textSize="12sp"/>
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btnAgentTrigger"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="REMOTE TRIGGER IR (Panic)"
+                    android:layout_marginTop="12dp"
+                    style="@style/Widget.Material3.Button.TonalButton"/>
+
+                <Button
+                    android:id="@+id/btnAgentFetchLogs"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="EXFILTRATE CAPTURED DATA"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
         <!-- Sekcja nRF24 RF Tools -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"

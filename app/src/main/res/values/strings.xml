@@ -113,17 +113,12 @@
     <string name="advanced_nrf_discovered">Discovered: </string>
     <string name="advanced_nrf_payload_hint">Ducky Script / Commands</string>
     <string name="advanced_nrf_inject">INJECT PAYLOAD</string>
-    <string name="bt_remote_title">Bluetooth HID Remote</string>
-    <string name="bt_media_play">PLAY/PAUSE</string>
-    <string name="bt_media_next">NEXT</string>
-    <string name="bt_media_prev">PREV</string>
-    <string name="bt_volume_up">VOL +</string>
-    <string name="bt_volume_down">VOL -</string>
-    <string name="bt_camera_shutter">SHUTTER (Selfie)</string>
+
     <string name="net_scanner_title">Network Scanner (No Root)</string>
     <string name="net_scanner_scan">SCAN LOCAL NETWORK</string>
-    <string name="net_scanner_scanning">Scanning IPs 1-254...</string>
+    <string name="net_scanner_scanning">Scanning IPs 1-254…</string>
     <string name="net_scanner_found">Hosts Found: %1$d</string>
+
     <string name="nav_title">Bruce Navigator</string>
     <string name="nav_up">UP</string>
     <string name="nav_down">DOWN</string>
@@ -131,4 +126,9 @@
     <string name="nav_right">RIGHT</string>
     <string name="nav_ok">OK</string>
     <string name="nav_back">BACK</string>
+
+    <string name="agent_status_online">AGENT ONLINE</string>
+    <string name="agent_status_offline">AGENT OFFLINE</string>
+    <string name="agent_last_seen">Last seen: %1$s</string>
+    <string name="agent_command_sent">Command queued for agent</string>
 </resources>
