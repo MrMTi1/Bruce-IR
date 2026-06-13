@@ -881,7 +881,13 @@ class MainActivity : AppCompatActivity() {
         btnChangeMode.text = "${getString(R.string.transmitter_mode_title)}: ${transmitter.currentMode.name}"
         btnChangeMode.setOnClickListener {
             val modes = IrTransmitter.Mode.values()
-            val modeNames = modes.map { if (it == IrTransmitter.Mode.INTERNAL) getString(R.string.mode_internal) else getString(R.string.mode_usb) }.toTypedArray()
+            val modeNames = modes.map { 
+                when(it) {
+                    IrTransmitter.Mode.INTERNAL -> getString(R.string.mode_internal)
+                    IrTransmitter.Mode.USB -> getString(R.string.mode_usb)
+                    IrTransmitter.Mode.WIFI -> "Bruce WiFi"
+                }
+            }.toTypedArray()
             AlertDialog.Builder(this)
                 .setTitle(R.string.transmitter_mode_title)
                 .setItems(modeNames) { _, i ->

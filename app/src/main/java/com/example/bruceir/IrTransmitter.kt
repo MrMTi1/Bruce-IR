@@ -13,7 +13,7 @@ class IrTransmitter(private val context: Context) {
     private val usbManager: UsbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
     
     enum class Mode {
-        INTERNAL, USB
+        INTERNAL, USB, WIFI
     }
 
     var currentMode: Mode
@@ -42,15 +42,36 @@ class IrTransmitter(private val context: Context) {
     }
 
     fun transmit(frequency: Int, pattern: IntArray) {
-        if (currentMode == Mode.INTERNAL) {
-            try {
-                irManager?.transmit(frequency, pattern)
-            } catch (e: Exception) {
-                Log.e("IrTransmitter", "Internal Transmit Error: ${e.message}")
+        when (currentMode) {
+            Mode.INTERNAL -> {
+                try {
+                    irManager?.transmit(frequency, pattern)
+                } catch (e: Exception) {
+                    Log.e("IrTransmitter", "Internal Transmit Error: ${e.message}")
+                }
             }
-        } else {
-            transmitUsb(frequency, pattern)
+            Mode.USB -> transmitUsb(frequency, pattern)
+            Mode.WIFI -> transmitWifi(frequency, pattern)
         }
+    }
+
+    private fun transmitWifi(frequency: Int, pattern: IntArray) {
+        val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
+        val baseUrl = prefs.getString("bruce_url", "http://bruce.local") ?: "http://bruce.local"
+        val user = prefs.getString("bruce_user", "admin") ?: "admin"
+        val pass = prefs.getString("bruce_pass", "bruce") ?: "bruce"
+
+        Thread {
+            try {
+                // Przykładowy endpoint dla Bruce Firmware do wysyłania IR
+                // Format: /ir?freq=38000&data=100 200 300...
+                val dataStr = pattern.joinToString(" ")
+                val url = "$baseUrl/ir?send=true&freq=$frequency&data=$dataStr"
+                BruceUtils.downloadFileContent(url, user, pass)
+            } catch (e: Exception) {
+                Log.e("IrTransmitter", "WiFi Transmit Error: ${e.message}")
+            }
+        }.start()
     }
 
     private fun transmitUsb(frequency: Int, pattern: IntArray) {
@@ -66,6 +87,7 @@ class IrTransmitter(private val context: Context) {
             port.open(connection)
             port.setParameters(115200, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE)
             
+            // Format: "S freq count p1 p2 ..."
             val cmd = "S $frequency ${pattern.size} ${pattern.joinToString(" ")}\n"
             port.write(cmd.toByteArray(), 1000)
             
