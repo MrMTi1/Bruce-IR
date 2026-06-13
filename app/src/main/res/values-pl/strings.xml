@@ -69,9 +69,9 @@
     <string name="remote_title">Bruce Remote Connect</string>
     <string name="remote_connect">Połącz</string>
 
-    <string name="info_title">BruceIR</string>
-    <string name="info_version">Wersja 2.5</string>
-    <string name="info_desc">Potężne narzędzie dla entuzjastów IR.\n\n• TV-B-Gone: Masowe wyłączanie z aktualną listą kodów.\n• IR Macro: Automatyczne sekwencje z zapętlaniem.\n• Bruce Remote: Integracja z WebUI i obsługa plików binarnych (.wav, .ir, itp).\n• USB OTG: Wsparcie dla zewnętrznych adapterów IR (CH340/CP2102/FTDI).\n• Smart Folders: Organizacja folderów.\n• Lux Meter: Sprawdzanie natężenia światła.</string>
+    <string name="info_title">BruceIR By MTi</string>
+    <string name="info_version">Wersja 2.5 (USB OTG Support)</string>
+    <string name="info_desc">Potężne narzędzie dla entuzjastów IR.\n\n• TV-B-Gone: Masowe wyłączanie z aktualną listą kodów.\n• IR Macro: Automatyczne sekwencje z zapętlaniem.\n• Bruce Remote: Sterowanie i import plików przez integrację WebUI.\n• Inteligentne Foldery: Organizuj tysiące kodów dzięki wsparciu dla podfolderów.\n• Lux Meter: Sprawdzaj natężenie światła otoczenia.\n• USB OTG: Wsparcie dla zewnętrznych adapterów IR (CH340/CP2102/FTDI).</string>
     <string name="info_github">Oficjalne Repozytorium GitHub</string>
     <string name="info_change_lang">Zmień język (PL/EN)</string>
 
@@ -90,16 +90,45 @@
     <string name="confirm_title">Potwierdź operację</string>
     <string name="confirm_delete_msg">Czy na pewno chcesz usunąć ten element?</string>
     <string name="confirm_move_msg">Czy na pewno chcesz przenieść ten element?</string>
+
     <string name="intercom_title">Krótkofalówka Bruce</string>
     <string name="intercom_ptt_hold">NACIŚNIJ I MÓW</string>
     <string name="intercom_spy_mode">TRYB PODSŁUCHU</string>
     <string name="intercom_mute_bruce">WYCISZ GŁOŚNIK BRUCE</string>
-    <string name="intercom_connecting">Łączenie ze strumieniem audio...</string>
+    <string name="intercom_connecting">Łączenie ze strumieniem audio…</string>
+    <string name="intercom_ready">GOTOWY</string>
+    <string name="intercom_talking">NADAWANIE…</string>
+
     <string name="advanced_title">Narzędzia Zaawansowane</string>
     <string name="advanced_c2_bridge">Zdalny Most C2 (Reverse Shell)</string>
-    <string name="advanced_wifi_wps">Połączenie WPS (Pobieranie Hasła)</string>
+    <string name="advanced_wifi_wps">WPS PIN (Pobieranie Hasła)</string>
     <string name="advanced_c2_host">Adres serwera C2 (IP/Host):</string>
     <string name="advanced_c2_port">Port C2:</string>
     <string name="advanced_c2_status">Status Mostu: </string>
     <string name="advanced_start_bridge">URUCHOM MOST</string>
+    <string name="advanced_socks_tunnel">Włącz tunelowanie SOCKS5 (Pivoting)</string>
+    <string name="advanced_persistence">Tryb Trwały (Auto-Reconnection)</string>
+    <string name="advanced_nrf_tools">Narzędzia nRF24 (Mousejack)</string>
+    <string name="advanced_nrf_scan">SKANUJ CELE</string>
+    <string name="advanced_nrf_discovered">Wykryto: </string>
+    <string name="advanced_nrf_payload_hint">Ducky Script / Komendy</string>
+    <string name="advanced_nrf_inject">WSTRZYKNIJ PAYLOAD</string>
+    <string name="bt_remote_title">Pilot Bluetooth HID</string>
+    <string name="bt_media_play">ODTWÓRZ/PAUZA</string>
+    <string name="bt_media_next">NASTĘPNY</string>
+    <string name="bt_media_prev">POPRZEDNI</string>
+    <string name="bt_volume_up">GŁOŚNOŚĆ +</string>
+    <string name="bt_volume_down">GŁOŚNOŚĆ -</string>
+    <string name="bt_camera_shutter">MIGAWKA (Selfie)</string>
+    <string name="net_scanner_title">Skaner Sieci (Bez Roota)</string>
+    <string name="net_scanner_scan">SKANUJ SIEĆ LOKALNĄ</string>
+    <string name="net_scanner_scanning">Skanowanie adresów 1-254...</string>
+    <string name="net_scanner_found">Znaleziono hostów: %1$d</string>
+    <string name="nav_title">Nawigator Bruce</string>
+    <string name="nav_up">GÓRA</string>
+    <string name="nav_down">DÓŁ</string>
+    <string name="nav_left">LEWO</string>
+    <string name="nav_right">PRAWO</string>
+    <string name="nav_ok">OK</string>
+    <string name="nav_back">WSTECZ</string>
 </resources>

@@ -19,6 +19,31 @@
             android:textColor="#FF5722"
             android:layout_marginBottom="24dp"/>
 
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            style="@style/Widget.Material3.CardView.Elevated">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Network Utilities"
+                    android:textStyle="bold"
+                    android:textColor="#2196F3"/>
+                <Button
+                    android:id="@+id/btnOpenScanner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/net_scanner_scan"
+                    android:layout_marginTop="8dp"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
         <!-- Sekcja WPS -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
@@ -41,6 +66,7 @@
                     android:layout_height="wrap_content"
                     android:hint="8-digit PIN"
                     android:inputType="number"
+                    android:autofillHints="none"
                     android:layout_marginTop="8dp"/>
                 <Button
                     android:id="@+id/btnConnectWps"
@@ -76,6 +102,8 @@
                     android:id="@+id/etC2Host"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:inputType="textUri"
+                    android:autofillHints="none"
                     android:hint="attacker.com or 1.2.3.4"/>
                 <TextView
                     android:layout_width="wrap_content"
@@ -87,6 +115,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="4444"
+                    android:autofillHints="none"
                     android:inputType="number"/>
                 <Button
                     android:id="@+id/btnStartBridge"
@@ -100,7 +129,7 @@
                     android:id="@+id/swSocksProxy"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Enable SOCKS5 Tunneling (Pivoting)"
+                    android:text="@string/advanced_socks_tunnel"
                     android:layout_marginTop="8dp"
                     android:checked="true"/>
 
@@ -108,7 +137,7 @@
                     android:id="@+id/swPersistence"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Persistent Mode (Auto-Reconnect)"
+                    android:text="@string/advanced_persistence"
                     android:layout_marginTop="4dp"
                     android:checked="true"/>
 
@@ -137,7 +166,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="nRF24 RF Tools"
+                    android:text="@string/advanced_nrf_tools"
                     android:textStyle="bold"
                     android:textColor="#4CAF50"/>
 
@@ -145,14 +174,14 @@
                     android:id="@+id/btnNrfScan"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="SCAN FOR TARGETS (Mousejack)"
+                    android:text="@string/advanced_nrf_scan"
                     android:layout_marginTop="12dp"/>
 
                 <TextView
                     android:id="@+id/tvNrfResults"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Discovered: None"
+                    android:text="@string/advanced_nrf_discovered"
                     android:layout_marginTop="8dp"
                     android:textSize="12sp"
                     android:fontFamily="monospace"/>
@@ -161,14 +190,15 @@
                     android:id="@+id/etNrfPayload"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Ducky Script / Commands"
+                    android:hint="@string/advanced_nrf_payload_hint"
+                    android:autofillHints="none"
                     android:layout_marginTop="12dp"/>
 
                 <Button
                     android:id="@+id/btnNrfInject"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="INJECT PAYLOAD"
+                    android:text="@string/advanced_nrf_inject"
                     style="@style/Widget.Material3.Button.TonalButton"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>

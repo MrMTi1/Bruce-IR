@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?android:attr/windowBackground"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/tvNavTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/nav_title"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="32dp"
+        android:textColor="#607D8B"/>
+
+    <GridLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:columnCount="3"
+        android:rowCount="3">
+
+        <!-- Row 1 -->
+        <View android:layout_width="80dp" android:layout_height="80dp" />
+        <Button
+            android:id="@+id/btnNavUp"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:text="@string/nav_up"
+            style="@style/Widget.Material3.Button.TonalButton"/>
+        <View android:layout_width="80dp" android:layout_height="80dp" />
+
+        <!-- Row 2 -->
+        <Button
+            android:id="@+id/btnNavLeft"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:text="@string/nav_left"
+            style="@style/Widget.Material3.Button.TonalButton"/>
+        <Button
+            android:id="@+id/btnNavOk"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:text="@string/nav_ok"
+            android:textStyle="bold"/>
+        <Button
+            android:id="@+id/btnNavRight"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:text="@string/nav_right"
+            style="@style/Widget.Material3.Button.TonalButton"/>
+
+        <!-- Row 3 -->
+        <View android:layout_width="80dp" android:layout_height="80dp" />
+        <Button
+            android:id="@+id/btnNavDown"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:text="@string/nav_down"
+            style="@style/Widget.Material3.Button.TonalButton"/>
+        <View android:layout_width="80dp" android:layout_height="80dp" />
+
+    </GridLayout>
+
+    <Button
+        android:id="@+id/btnNavBack"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="32dp"
+        android:text="@string/nav_back"
+        style="@style/Widget.Material3.Button.OutlinedButton"/>
+
+</RelativeLayout>

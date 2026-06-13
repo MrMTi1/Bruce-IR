@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:gravity="center"
+    android:background="?android:attr/windowBackground">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/bt_remote_title"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="#3F51B5"
+        android:layout_marginBottom="32dp"/>
+
+    <TextView
+        android:id="@+id/tvBtStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Status: Disconnected"
+        android:layout_marginBottom="32dp"
+        android:alpha="0.7"/>
+
+    <GridLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:columnCount="2"
+        android:alignmentMode="alignMargins"
+        android:rowOrderPreserved="false">
+
+        <Button
+            android:id="@+id/btnBtVolUp"
+            android:layout_width="140dp"
+            android:layout_height="60dp"
+            android:text="@string/bt_volume_up"
+            android:layout_margin="8dp"/>
+
+        <Button
+            android:id="@+id/btnBtVolDown"
+            android:layout_width="140dp"
+            android:layout_height="60dp"
+            android:text="@string/bt_volume_down"
+            android:layout_margin="8dp"/>
+
+        <Button
+            android:id="@+id/btnBtPrev"
+            android:layout_width="140dp"
+            android:layout_height="60dp"
+            android:text="@string/bt_media_prev"
+            android:layout_margin="8dp"/>
+
+        <Button
+            android:id="@+id/btnBtNext"
+            android:layout_width="140dp"
+            android:layout_height="60dp"
+            android:text="@string/bt_media_next"
+            android:layout_margin="8dp"/>
+
+        <Button
+            android:id="@+id/btnBtPlay"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_columnSpan="2"
+            android:text="@string/bt_media_play"
+            android:layout_margin="8dp"
+            style="@style/Widget.Material3.Button.TonalButton"/>
+
+        <Button
+            android:id="@+id/btnBtSelfie"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_columnSpan="2"
+            android:text="@string/bt_camera_shutter"
+            android:layout_margin="8dp"
+            style="@style/Widget.Material3.Button.TonalButton"/>
+
+    </GridLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Note: Pair your phone in Bluetooth settings first. This app will act as a Keyboard/Remote."
+        android:textSize="12sp"
+        android:textAlignment="center"
+        android:layout_marginTop="32dp"
+        android:alpha="0.5"/>
+
+</LinearLayout>

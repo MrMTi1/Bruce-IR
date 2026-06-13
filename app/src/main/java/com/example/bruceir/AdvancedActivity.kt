@@ -2,6 +2,7 @@ package com.example.bruceir
 
 import android.os.Bundle
 import android.widget.*
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 
 class AdvancedActivity : AppCompatActivity() {
@@ -14,6 +15,10 @@ class AdvancedActivity : AppCompatActivity() {
         val baseUrl = prefs.getString("bruce_url", "http://bruce.local") ?: "http://bruce.local"
         val user = prefs.getString("bruce_user", "admin") ?: "admin"
         val pass = prefs.getString("bruce_pass", "bruce") ?: "bruce"
+
+        findViewById<Button>(R.id.btnOpenScanner).setOnClickListener {
+            startActivity(android.content.Intent(this, NetworkScannerActivity::class.java))
+        }
 
         // WPS Section
         findViewById<Button>(R.id.btnConnectWps).setOnClickListener {

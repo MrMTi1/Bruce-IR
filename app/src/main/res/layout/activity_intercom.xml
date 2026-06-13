@@ -46,7 +46,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
-        android:text="Ready"
+        android:text="@string/intercom_ready"
         android:alpha="0.7"/>
 
 </LinearLayout>

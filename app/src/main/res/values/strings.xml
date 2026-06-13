@@ -64,13 +64,13 @@
     <string name="import_op_export">EXPORT DATABASE (Backup)</string>
     <string name="import_op_import">IMPORT DATABASE (Restore)</string>
 
-    <string name="search_hint">Search buttons...</string>
+    <string name="search_hint">Search buttons…</string>
     <string name="folder_root">MAIN (ROOT)</string>
     <string name="remote_title">Bruce Remote Connect</string>
     <string name="remote_connect">Connect</string>
 
-    <string name="info_title">BruceIR</string>
-    <string name="info_version">Version 2.5</string>
+    <string name="info_title">BruceIR By MTi</string>
+    <string name="info_version">Version 2.5 (USB OTG Support)</string>
     <string name="info_desc">The ultimate tool for IR enthusiasts.\n\n• TV-B-Gone: Mass shutdown with updated code lists.\n• IR Macro: Automated command sequences with looping.\n• Bruce Remote: WebUI integration with binary file support (.wav, .ir, etc).\n• USB OTG: Support for external IR adapters (CH340/CP2102/FTDI).\n• Smart Folders: Nested folder organization.\n• Lux Meter: Check ambient light intensity.</string>
     <string name="info_github">Official GitHub Repository</string>
     <string name="info_change_lang">Change Language (PL/EN)</string>
@@ -90,16 +90,45 @@
     <string name="confirm_title">Confirm Action</string>
     <string name="confirm_delete_msg">Are you sure you want to delete this item?</string>
     <string name="confirm_move_msg">Are you sure you want to move this item?</string>
+
     <string name="intercom_title">Bruce Walkie-Talkie</string>
     <string name="intercom_ptt_hold">PUSH TO TALK</string>
     <string name="intercom_spy_mode">SPY MODE (Listen)</string>
     <string name="intercom_mute_bruce">MUTE BRUCE SPEAKER</string>
-    <string name="intercom_connecting">Connecting to audio stream...</string>
+    <string name="intercom_connecting">Connecting to audio stream…</string>
+    <string name="intercom_ready">READY</string>
+    <string name="intercom_talking">TALKING…</string>
+
     <string name="advanced_title">Bruce Advanced Tools</string>
     <string name="advanced_c2_bridge">Remote C2 Bridge (Reverse Shell)</string>
-    <string name="advanced_wifi_wps">WPS Pin Connector (Password Grabber)</string>
+    <string name="advanced_wifi_wps">WPS PIN Password Grabber</string>
     <string name="advanced_c2_host">C2 Server IP/Host:</string>
     <string name="advanced_c2_port">C2 Port:</string>
     <string name="advanced_c2_status">Bridge Status: </string>
     <string name="advanced_start_bridge">START BRIDGE</string>
+    <string name="advanced_socks_tunnel">Enable SOCKS5 Tunneling (Pivoting)</string>
+    <string name="advanced_persistence">Persistent Mode (Auto-Reconnect)</string>
+    <string name="advanced_nrf_tools">nRF24 RF Tools (Mousejack)</string>
+    <string name="advanced_nrf_scan">SCAN FOR TARGETS</string>
+    <string name="advanced_nrf_discovered">Discovered: </string>
+    <string name="advanced_nrf_payload_hint">Ducky Script / Commands</string>
+    <string name="advanced_nrf_inject">INJECT PAYLOAD</string>
+    <string name="bt_remote_title">Bluetooth HID Remote</string>
+    <string name="bt_media_play">PLAY/PAUSE</string>
+    <string name="bt_media_next">NEXT</string>
+    <string name="bt_media_prev">PREV</string>
+    <string name="bt_volume_up">VOL +</string>
+    <string name="bt_volume_down">VOL -</string>
+    <string name="bt_camera_shutter">SHUTTER (Selfie)</string>
+    <string name="net_scanner_title">Network Scanner (No Root)</string>
+    <string name="net_scanner_scan">SCAN LOCAL NETWORK</string>
+    <string name="net_scanner_scanning">Scanning IPs 1-254...</string>
+    <string name="net_scanner_found">Hosts Found: %1$d</string>
+    <string name="nav_title">Bruce Navigator</string>
+    <string name="nav_up">UP</string>
+    <string name="nav_down">DOWN</string>
+    <string name="nav_left">LEFT</string>
+    <string name="nav_right">RIGHT</string>
+    <string name="nav_ok">OK</string>
+    <string name="nav_back">BACK</string>
 </resources>

@@ -176,6 +176,14 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, IntercomActivity::class.java))
         }
 
+        findViewById<ImageButton>(R.id.btnBluetooth).setOnClickListener {
+            startActivity(Intent(this, BluetoothActivity::class.java))
+        }
+
+        findViewById<ImageButton>(R.id.btnNavigator).setOnClickListener {
+            startActivity(Intent(this, NavigatorActivity::class.java))
+        }
+
         findViewById<ImageButton>(R.id.btnViewMode).setOnClickListener {
             isListView = !isListView
             adapter.setListView(isListView)
