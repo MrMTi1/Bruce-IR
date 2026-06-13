@@ -54,6 +54,9 @@
         <activity android:name=".IntercomActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".BluetoothActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".NavigatorActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".SubGhzActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".RfAnalyzerActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".SerialConsoleActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".NetworkScannerActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".AdvancedActivity" android:exported="false" android:screenOrientation="portrait" />
 

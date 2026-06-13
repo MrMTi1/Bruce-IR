@@ -99,18 +99,135 @@ class AdvancedActivity : AppCompatActivity() {
             }.start()
         }
 
-        findViewById<Button>(R.id.btnNrfInject).setOnClickListener {
-            val payload = findViewById<EditText>(R.id.etNrfPayload).text.toString()
-            if (payload.isEmpty()) return@setOnClickListener
-            
+        findViewById<Button>(R.id.btnNrfJam).setOnClickListener {
             Thread {
-                val encodedPayload = java.net.URLEncoder.encode(payload, "UTF-8")
-                val url = "$baseUrl/nrf/inject?data=$encodedPayload"
+                val url = "$baseUrl/nrf/jam?start=true"
                 BruceUtils.downloadFileContent(url, user, pass)
-                runOnUiThread {
-                    Toast.makeText(this, "Injection sequence sent to nRF24", Toast.LENGTH_SHORT).show()
-                }
+                runOnUiThread { Toast.makeText(this, "RF Jamming Started!", Toast.LENGTH_SHORT).show() }
             }.start()
         }
+
+        // BLE Spam Section
+        val bleSpamManager = BleSpamManager()
+
+        findViewById<Button>(R.id.btnBleFlood).setOnClickListener {
+            Thread {
+                val url = "$baseUrl/ble/spam?mode=all&intensity=max"
+                BruceUtils.downloadFileContent(url, user, pass)
+                runOnUiThread { Toast.makeText(this, "Bruce BLE Spam Activated!", Toast.LENGTH_SHORT).show() }
+            }.start()
+        }
+
+        findViewById<Button>(R.id.btnLocalBleSpam).setOnClickListener {
+            bleSpamManager.startSpam()
+            Toast.makeText(this, "Local BLE Spamming Started (Phone)", Toast.LENGTH_LONG).show()
+        }
+
+        findViewById<Button>(R.id.btnBleStop).setOnClickListener {
+            bleSpamManager.stopSpam()
+            Thread {
+                val url = "$baseUrl/ble/stop"
+                BruceUtils.downloadFileContent(url, user, pass)
+                runOnUiThread { Toast.makeText(this, "All Wireless Attacks Stopped", Toast.LENGTH_SHORT).show() }
+            }.start()
+        }
+
+        // Printer & RF Tools Section
+        findViewById<Button>(R.id.btnOpenScanner).setOnClickListener {
+            startActivity(android.content.Intent(this, NetworkScannerActivity::class.java))
+        }
+
+        findViewById<Button>(R.id.btnOpenWeather).setOnClickListener {
+            showWeatherSpoofDialog()
+        }
+
+        findViewById<Button>(R.id.btnOpenTpms).setOnClickListener {
+            showTpmsToolDialog()
+        }
+
+        findViewById<Button>(R.id.btnOpenSubGhz).setOnClickListener {
+            startActivity(android.content.Intent(this, SubGhzActivity::class.java))
+        }
+
+        findViewById<Button>(R.id.btnOpenImmo).setOnClickListener {
+            showImmoToolDialog()
+        }
+
+        findViewById<Button>(R.id.btnOpenEmulate).setOnClickListener {
+            showEmulateDialog()
+        }
+    }
+
+    private fun showImmoToolDialog() {
+        val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(50, 40, 50, 10) }
+        val tvStatus = TextView(this).apply { text = getString(R.string.immo_detecting) }
+        layout.addView(tvStatus)
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.immo_title)
+            .setView(layout)
+            .setPositiveButton(R.string.immo_scan) { _, _ ->
+                Thread {
+                    val url = "http://bruce.local/rfid/scan"
+                    val response = BruceUtils.downloadFileContent(url, "admin", "bruce")
+                    runOnUiThread {
+                        if (response != null) {
+                            AlertDialog.Builder(this).setTitle("RFID Tag Found").setMessage(response).setPositiveButton("OK", null).show()
+                        }
+                    }
+                }.start()
+            }.show()
+    }
+
+    private fun showEmulateDialog() {
+        val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(50, 40, 50, 10) }
+        val etId = EditText(this).apply { hint = "UID (Hex)"; setText("DE AD BE EF") }
+        layout.addView(etId)
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.immo_emulate)
+            .setView(layout)
+            .setPositiveButton("START EMULATION") { _, _ ->
+                Thread {
+                    val url = "http://bruce.local/rfid/emulate?uid=${etId.text}"
+                    BruceUtils.downloadFileContent(url, "admin", "bruce")
+                }.start()
+            }.show()
+    }
+
+    private fun showWeatherSpoofDialog() {
+        val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(50, 40, 50, 10) }
+        val etTemp = EditText(this).apply { hint = getString(R.string.weather_temp); setText("25.5") }
+        val etHum = EditText(this).apply { hint = getString(R.string.weather_hum); setText("45") }
+        layout.addView(etTemp); layout.addView(etHum)
+
+        AlertDialog.Builder(this)
+            .setTitle(R.string.weather_title)
+            .setView(layout)
+            .setPositiveButton(R.string.weather_send) { _, _ ->
+                Thread {
+                    val url = "http://bruce.local/rf/weather?temp=${etTemp.text}&hum=${etHum.text}"
+                    BruceUtils.downloadFileContent(url, "admin", "bruce")
+                }.start()
+            }.show()
+    }
+
+    private fun showTpmsToolDialog() {
+        val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(50, 40, 50, 10) }
+        val etId = EditText(this).apply { hint = "Sensor ID (Hex)"; setText("A1B2C3D4") }
+        val etPress = EditText(this).apply { hint = "Pressure (Bar)"; setText("0.8") }
+        layout.addView(etId); layout.addView(etPress)
+
+        AlertDialog.Builder(this)
+            .setTitle("TPMS SENSOR SPOOF")
+            .setView(layout)
+            .setPositiveButton("EMULATE ALARM") { _, _ ->
+                Thread {
+                    val url = "http://bruce.local/rf/tpms?id=${etId.text}&press=${etPress.text}&status=alert"
+                    BruceUtils.downloadFileContent(url, "admin", "bruce")
+                }.start()
+            }.setNeutralButton("SCAN", { _, _ ->
+                Toast.makeText(this, "Bruce is listening for TPMS packets...", Toast.LENGTH_LONG).show()
+            }).show()
     }
 }

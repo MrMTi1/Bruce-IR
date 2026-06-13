@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?android:attr/windowBackground">
@@ -19,6 +20,7 @@
             android:textColor="#FF5722"
             android:layout_marginBottom="24dp"/>
 
+        <!-- Network Utilities -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -202,7 +204,8 @@
                     android:id="@+id/btnAgentFetchLogs"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="EXFILTRATE CAPTURED DATA"/>
+                    android:text="EXFILTRATE CAPTURED DATA"
+                    style="@style/Widget.Material3.Button.TextButton"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
@@ -253,6 +256,163 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/advanced_nrf_inject"
+                    style="@style/Widget.Material3.Button.TonalButton"/>
+
+                <Button
+                    android:id="@+id/btnNrfJam"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/advanced_nrf_jam"
+                    android:layout_marginTop="8dp"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:textColor="#F44336"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Sekcja BLE Spam -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            style="@style/Widget.Material3.CardView.Elevated">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/advanced_ble_title"
+                    android:textStyle="bold"
+                    android:textColor="#3F51B5"/>
+
+                <Button
+                    android:id="@+id/btnBleFlood"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/advanced_ble_flood"
+                    android:layout_marginTop="12dp"/>
+
+                <Button
+                    android:id="@+id/btnLocalBleSpam"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="LOCAL PHONE BLE SPAM"
+                    android:layout_marginTop="4dp"
+                    style="@style/Widget.Material3.Button.TonalButton"/>
+
+                <Button
+                    android:id="@+id/btnBleStop"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/advanced_ble_stop"
+                    style="@style/Widget.Material3.Button.TextButton"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Sekcja Printer Attack -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            style="@style/Widget.Material3.CardView.Elevated">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/printer_attack_title"
+                    android:textStyle="bold"
+                    android:textColor="#9C27B0"/>
+                <Button
+                    android:id="@+id/btnOpenPrinterAttack"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="OPEN PRINTER COMMANDER"
+                    android:layout_marginTop="8dp"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Sekcja RF Spoofing (Weather & TPMS) -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="40dp"
+            style="@style/Widget.Material3.CardView.Elevated">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="RF Signal Spoofing"
+                    android:textStyle="bold"
+                    android:textColor="#FF9800"/>
+
+                <Button
+                    android:id="@+id/btnOpenWeather"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/weather_title"
+                    android:layout_marginTop="12dp"
+                    style="@style/Widget.Material3.Button.TonalButton"/>
+
+                <Button
+                    android:id="@+id/btnOpenTpms"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="TPMS SENSOR TOOL"
+                    style="@style/Widget.Material3.Button.TonalButton"/>
+
+                <Button
+                    android:id="@+id/btnOpenSubGhz"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="SUB-GHZ GATE MASTER"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:textColor="#2196F3"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Sekcja RFID / IMMO -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="40dp"
+            style="@style/Widget.Material3.CardView.Elevated">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="RFID &amp; IMMO (PN532/RFID2)"
+                    android:textStyle="bold"
+                    android:textColor="#E91E63"/>
+
+                <Button
+                    android:id="@+id/btnOpenImmo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/immo_scan"
+                    android:layout_marginTop="12dp"
+                    style="@style/Widget.Material3.Button.TonalButton"/>
+
+                <Button
+                    android:id="@+id/btnOpenEmulate"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/immo_emulate"
                     style="@style/Widget.Material3.Button.TonalButton"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>

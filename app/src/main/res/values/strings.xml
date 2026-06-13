@@ -70,8 +70,8 @@
     <string name="remote_connect">Connect</string>
 
     <string name="info_title">BruceIR By MTi</string>
-    <string name="info_version">Version 2.5 (USB OTG Support)</string>
-    <string name="info_desc">The ultimate tool for IR enthusiasts.\n\n• TV-B-Gone: Mass shutdown with updated code lists.\n• IR Macro: Automated command sequences with looping.\n• Bruce Remote: WebUI integration with binary file support (.wav, .ir, etc).\n• USB OTG: Support for external IR adapters (CH340/CP2102/FTDI).\n• Smart Folders: Nested folder organization.\n• Lux Meter: Check ambient light intensity.</string>
+    <string name="info_version">Version 4.0</string>
+    <string name="info_desc">The ultimate tool for RF &amp; IR enthusiasts.\n\n• TV-B-Gone: Mass shutdown.\n• IR Macro: Automation.\n• Bruce Remote: WebUI integration.\n• USB OTG: External IR support.\n• C2 Bridge: Reverse shell &amp; pivoting.\n• nRF24 Tools: Mousejacking &amp; Jamming.\n• BLE Spam: Pairing flood.\n• IMMO Tool: RFID key identification.</string>
     <string name="info_github">Official GitHub Repository</string>
     <string name="info_change_lang">Change Language (PL/EN)</string>
 
@@ -108,14 +108,19 @@
     <string name="advanced_start_bridge">START BRIDGE</string>
     <string name="advanced_socks_tunnel">Enable SOCKS5 Tunneling (Pivoting)</string>
     <string name="advanced_persistence">Persistent Mode (Auto-Reconnect)</string>
-    <string name="advanced_nrf_tools">nRF24 RF Tools (Mousejack)</string>
-    <string name="advanced_nrf_scan">SCAN FOR TARGETS</string>
+    <string name="advanced_nrf_tools">nRF24 RF Tools</string>
+    <string name="advanced_nrf_scan">SCAN MOUSEJACK</string>
     <string name="advanced_nrf_discovered">Discovered: </string>
     <string name="advanced_nrf_payload_hint">Ducky Script / Commands</string>
     <string name="advanced_nrf_inject">INJECT PAYLOAD</string>
+    <string name="advanced_nrf_jam">RF JAMMER (2.4GHz)</string>
 
-    <string name="net_scanner_title">Network Scanner (No Root)</string>
-    <string name="net_scanner_scan">SCAN LOCAL NETWORK</string>
+    <string name="advanced_ble_title">BLE Spam Tools</string>
+    <string name="advanced_ble_flood">START BLE PAIRING FLOOD</string>
+    <string name="advanced_ble_stop">STOP BLE SPAM</string>
+
+    <string name="net_scanner_title">Network Scanner</string>
+    <string name="net_scanner_scan">DEEP SCAN (Ports &amp; Hostnames)</string>
     <string name="net_scanner_scanning">Scanning IPs 1-254…</string>
     <string name="net_scanner_found">Hosts Found: %1$d</string>
 
@@ -131,4 +136,32 @@
     <string name="agent_status_offline">AGENT OFFLINE</string>
     <string name="agent_last_seen">Last seen: %1$s</string>
     <string name="agent_command_sent">Command queued for agent</string>
+
+    <string name="printer_attack_title">Printer Spam Attack</string>
+    <string name="printer_target_ip">Printer IP:</string>
+    <string name="printer_text">Text to print:</string>
+    <string name="printer_delay">Delay between pages (s):</string>
+    <string name="printer_start">START PRINTER ATTACK</string>
+    <string name="printer_stop">STOP ATTACK</string>
+
+    <string name="bt_remote_title">Bluetooth HID Remote</string>
+    <string name="bt_media_play">PLAY/PAUSE</string>
+    <string name="bt_media_next">NEXT</string>
+    <string name="bt_media_prev">PREV</string>
+    <string name="bt_volume_up">VOL +</string>
+    <string name="bt_volume_down">VOL -</string>
+    <string name="bt_camera_shutter">SHUTTER (Selfie)</string>
+
+    <string name="weather_title">Weather Station Spoof</string>
+    <string name="weather_temp">Temperature (°C):</string>
+    <string name="weather_hum">Humidity (%):</string>
+    <string name="weather_send">SEND SPOOFED DATA</string>
+
+    <string name="immo_title">IMMO &amp; RFID Tool</string>
+    <string name="immo_scan">SCAN KEY / TAG</string>
+    <string name="immo_detecting">Waiting for RFID tag...</string>
+    <string name="immo_id">ID:</string>
+    <string name="immo_type">TYPE:</string>
+    <string name="immo_emulate">EMULATE TAG</string>
+    <string name="immo_cloned">Tag cloned successfully!</string>
 </resources>

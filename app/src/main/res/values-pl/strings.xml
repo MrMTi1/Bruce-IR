@@ -70,8 +70,8 @@
     <string name="remote_connect">Połącz</string>
 
     <string name="info_title">BruceIR By MTi</string>
-    <string name="info_version">Wersja 2.5 (USB OTG Support)</string>
-    <string name="info_desc">Potężne narzędzie dla entuzjastów IR.\n\n• TV-B-Gone: Masowe wyłączanie z aktualną listą kodów.\n• IR Macro: Automatyczne sekwencje z zapętlaniem.\n• Bruce Remote: Sterowanie i import plików przez integrację WebUI.\n• Inteligentne Foldery: Organizuj tysiące kodów dzięki wsparciu dla podfolderów.\n• Lux Meter: Sprawdzaj natężenie światła otoczenia.\n• USB OTG: Wsparcie dla zewnętrznych adapterów IR (CH340/CP2102/FTDI).</string>
+    <string name="info_version">Wersja 4.0</string>
+    <string name="info_desc">Potężne narzędzie dla entuzjastów RF i IR.\n\n• TV-B-Gone: Masowe wyłączanie.\n• IR Macro: Automatyzacja.\n• Bruce Remote: Integracja z WebUI.\n• USB OTG: Zewnętrzne nadajniki IR.\n• C2 Bridge: Reverse shell i pivoting.\n• nRF24 Tools: Mousejacking i zagłuszanie.\n• BLE Spam: Ataki na Bluetooth.\n• IMMO Tool: Identyfikacja kluczyków RFID.</string>
     <string name="info_github">Oficjalne Repozytorium GitHub</string>
     <string name="info_change_lang">Zmień język (PL/EN)</string>
 
@@ -100,7 +100,7 @@
     <string name="intercom_talking">NADAWANIE…</string>
 
     <string name="advanced_title">Narzędzia Zaawansowane</string>
-    <string name="advanced_c2_bridge">Zdalny Most C2 (Reverse Shell)</string>
+    <string name="advanced_c2_bridge">Zdalny Most C2</string>
     <string name="advanced_wifi_wps">WPS PIN (Pobieranie Hasła)</string>
     <string name="advanced_c2_host">Adres serwera C2 (IP/Host):</string>
     <string name="advanced_c2_port">Port C2:</string>
@@ -108,14 +108,19 @@
     <string name="advanced_start_bridge">URUCHOM MOST</string>
     <string name="advanced_socks_tunnel">Włącz tunelowanie SOCKS5 (Pivoting)</string>
     <string name="advanced_persistence">Tryb Trwały (Auto-Reconnection)</string>
-    <string name="advanced_nrf_tools">Narzędzia nRF24 (Mousejack)</string>
-    <string name="advanced_nrf_scan">SKANUJ CELE</string>
+    <string name="advanced_nrf_tools">Narzędzia nRF24</string>
+    <string name="advanced_nrf_scan">SKANUJ MOUSEJACK</string>
     <string name="advanced_nrf_discovered">Wykryto: </string>
     <string name="advanced_nrf_payload_hint">Ducky Script / Komendy</string>
     <string name="advanced_nrf_inject">WSTRZYKNIJ PAYLOAD</string>
+    <string name="advanced_nrf_jam">ZAGŁUSZACZ RF</string>
 
-    <string name="net_scanner_title">Skaner Sieci (Bez Roota)</string>
-    <string name="net_scanner_scan">SKANUJ SIEĆ LOKALNĄ</string>
+    <string name="advanced_ble_title">Narzędzia BLE Spam</string>
+    <string name="advanced_ble_flood">URUCHOM FLOOD PAROWANIA</string>
+    <string name="advanced_ble_stop">ZATRZYMAJ SPAM BLE</string>
+
+    <string name="net_scanner_title">Skaner Sieci</string>
+    <string name="net_scanner_scan">GŁĘBOKIE SKANOWANIE</string>
     <string name="net_scanner_scanning">Skanowanie adresów 1-254…</string>
     <string name="net_scanner_found">Znaleziono hostów: %1$d</string>
 
@@ -131,4 +136,32 @@
     <string name="agent_status_offline">AGENT OFFLINE</string>
     <string name="agent_last_seen">Ostatnio widziany: %1$s</string>
     <string name="agent_command_sent">Polecenie wysłane do agenta</string>
+
+    <string name="printer_attack_title">Atak na Drukarki</string>
+    <string name="printer_target_ip">IP Drukarki:</string>
+    <string name="printer_text">Tekst do wydruku:</string>
+    <string name="printer_delay">Opóźnienie (sekundy):</string>
+    <string name="printer_start">URUCHOM ATAK</string>
+    <string name="printer_stop">ZATRZYMAJ ATAK</string>
+
+    <string name="bt_remote_title">Pilot Bluetooth HID</string>
+    <string name="bt_media_play">ODTWÓRZ/PAUZA</string>
+    <string name="bt_media_next">NASTĘPNY</string>
+    <string name="bt_media_prev">POPRZEDNI</string>
+    <string name="bt_volume_up">GŁOŚNOŚĆ +</string>
+    <string name="bt_volume_down">GŁOŚNOŚĆ -</string>
+    <string name="bt_camera_shutter">MIGAWKA (Selfie)</string>
+
+    <string name="weather_title">Podszywanie pod Stację Pogodową</string>
+    <string name="weather_temp">Temperatura (°C):</string>
+    <string name="weather_hum">Wilgotność (%):</string>
+    <string name="weather_send">WYŚLIJ FAŁSZYWE DANE</string>
+
+    <string name="immo_title">Narzędzie IMMO &amp; RFID</string>
+    <string name="immo_scan">SKANUJ KLUCZ / TAG</string>
+    <string name="immo_detecting">Oczekiwanie na tag RFID…</string>
+    <string name="immo_id">ID:</string>
+    <string name="immo_type">TYP:</string>
+    <string name="immo_emulate">EMULUJ TAG</string>
+    <string name="immo_cloned">Tag sklonowany poprawnie!</string>
 </resources>

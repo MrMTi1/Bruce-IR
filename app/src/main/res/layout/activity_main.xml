@@ -3,158 +3,60 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?android:attr/windowBackground"
-    android:fitsSystemWindows="true">
+    android:background="?android:attr/windowBackground">
 
+    <!-- Top Toolbar -->
     <LinearLayout
         android:id="@+id/header"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="56dp"
         android:background="?attr/colorSurface"
         android:elevation="4dp"
-        android:orientation="vertical"
-        android:padding="8dp">
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="16dp"
+        android:paddingEnd="8dp">
 
-        <!-- Pierwszy rząd: Logo, Tytuł i Przyciski Systemowe -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+        <ImageView
+            android:id="@+id/ivLogo"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/bruceirbymti"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true" />
 
-            <ImageView
-                android:id="@+id/ivLogo"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/bruceirbymti"
-                android:layout_marginEnd="8dp"
-                android:scaleType="centerInside"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="?attr/selectableItemBackgroundBorderless" />
+        <TextView
+            android:id="@+id/tvHeaderTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="16dp"
+            android:text="BruceIR"
+            android:textColor="#2196F3"
+            android:textSize="18sp"
+            android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/tvHeaderTitle"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/header_title_root"
-                android:textColor="#2196F3"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+        <ImageButton
+            android:id="@+id/btnViewMode"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_sort_by_size" />
 
-            <ImageButton
-                android:id="@+id/btnSearch"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_search"
-                app:tint="#444444" />
+        <ImageButton
+            android:id="@+id/btnSearch"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_search" />
 
-            <ImageButton
-                android:id="@+id/btnViewMode"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_sort_by_size"
-                app:tint="#444444" />
-
-            <ImageButton
-                android:id="@+id/btnLock"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_secure"
-                app:tint="#444444" />
-        </LinearLayout>
-
-        <!-- Drugi rząd: Narzędzia IR / Pliki -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <ImageButton
-                android:id="@+id/btnTvBGone"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_lock_power_off"
-                app:tint="#F44336" />
-
-            <ImageButton
-                android:id="@+id/btnRemote"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_info_details"
-                app:tint="#4CAF50" />
-
-            <ImageButton
-                android:id="@+id/btnMacro"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_agenda"
-                app:tint="#9C27B0" />
-
-            <ImageButton
-                android:id="@+id/btnLux"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_view"
-                app:tint="#FFC107" />
-        </LinearLayout>
-
-        <!-- Trzeci rząd: Narzędzia Zaawansowane -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <ImageButton
-                android:id="@+id/btnIntercom"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/stat_notify_chat"
-                app:tint="#00BCD4" />
-
-            <ImageButton
-                android:id="@+id/btnBluetooth"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/stat_sys_data_bluetooth"
-                app:tint="#3F51B5" />
-
-            <ImageButton
-                android:id="@+id/btnNavigator"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_compass"
-                app:tint="#607D8B" />
-
-            <ImageButton
-                android:id="@+id/btnAdvanced"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_dialog_dialer"
-                app:tint="#FF5722" />
-        </LinearLayout>
+        <ImageButton
+            android:id="@+id/btnLock"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_secure" />
     </LinearLayout>
 
     <EditText
@@ -163,33 +65,85 @@
         android:layout_height="50dp"
         android:layout_below="@id/header"
         android:background="?attr/colorSurface"
-        android:textColor="?attr/colorOnSurface"
-        android:drawableStart="@android:drawable/ic_menu_search"
-        android:drawablePadding="12dp"
-        android:elevation="2dp"
         android:hint="@string/search_hint"
         android:padding="10dp"
         android:singleLine="true"
-        android:textSize="14sp"
         android:visibility="gone" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
+    <!-- Section 1: Remotes (RecyclerView) -->
+    <FrameLayout
+        android:id="@+id/sectionRemotes"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/etSearch"
-        android:padding="8dp"
-        android:clipToPadding="false" />
+        android:layout_above="@id/bottomNav">
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabAdd"
-        android:layout_width="wrap_content"
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="8dp"
+            android:clipToPadding="false" />
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabAdd"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="24dp"
+            android:src="@android:drawable/ic_input_add"
+            app:backgroundTint="#2196F3"
+            app:tint="#FFFFFF" />
+    </FrameLayout>
+
+    <!-- Section 2: Cyber/Exploits (Grid) -->
+    <ScrollView
+        android:id="@+id/sectionCyber"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/header"
+        android:layout_above="@id/bottomNav"
+        android:visibility="gone">
+        <GridLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:columnCount="2"
+            android:padding="12dp">
+            <!-- Buttons will be initialized in Activity -->
+            <Button android:id="@+id/cardTvBGone" android:text="TV-B-Gone" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_margin="8dp" style="@style/Widget.Material3.Button.TonalButton"/>
+            <Button android:id="@+id/cardAdvanced" android:text="Cyber Tools" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_margin="8dp" style="@style/Widget.Material3.Button.TonalButton"/>
+            <Button android:id="@+id/cardMacro" android:text="IR Macro" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_margin="8dp" style="@style/Widget.Material3.Button.TonalButton"/>
+        </GridLayout>
+    </ScrollView>
+
+    <!-- Section 3: System/Tools (Grid) -->
+    <ScrollView
+        android:id="@+id/sectionSystem"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/header"
+        android:layout_above="@id/bottomNav"
+        android:visibility="gone">
+        <GridLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:columnCount="2"
+            android:padding="12dp">
+            <Button android:id="@+id/cardRemote" android:text="Bruce Remote" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_margin="8dp" style="@style/Widget.Material3.Button.TonalButton"/>
+            <Button android:id="@+id/cardIntercom" android:text="Intercom" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_margin="8dp" style="@style/Widget.Material3.Button.TonalButton"/>
+            <Button android:id="@+id/cardNavigator" android:text="Navigator" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_margin="8dp" style="@style/Widget.Material3.Button.TonalButton"/>
+            <Button android:id="@+id/cardBluetooth" android:text="BT Remote" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_margin="8dp" style="@style/Widget.Material3.Button.TonalButton"/>
+            <Button android:id="@+id/cardLux" android:text="Lux Meter" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_margin="8dp" style="@style/Widget.Material3.Button.TonalButton"/>
+        </GridLayout>
+    </ScrollView>
+
+    <!-- Bottom Navigation -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNav"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
-        android:layout_margin="24dp"
-        android:src="@android:drawable/ic_input_add"
-        app:backgroundTint="#2196F3"
-        app:tint="#FFFFFF" />
+        android:background="?attr/colorSurface"
+        app:menu="@menu/bottom_nav_menu" />
 
 </RelativeLayout>

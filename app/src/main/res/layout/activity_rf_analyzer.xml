@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#000000"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="CC1101 RF ANALYZER"
+        android:textColor="#00E676"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Freq: "
+            android:textColor="#FFFFFF"/>
+
+        <EditText
+            android:id="@+id/etRfFreq"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="433.92"
+            android:textColor="#FFFFFF"
+            android:inputType="numberDecimal"
+            android:backgroundTint="#00E676"/>
+
+        <Button
+            android:id="@+id/btnSetFreq"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SET"
+            style="@style/Widget.Material3.Button.TonalButton"/>
+    </LinearLayout>
+
+    <!-- Tu w przyszłości będzie dynamiczny wykres -->
+    <View
+        android:id="@+id/vSignalView"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:background="#1A1A1A"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:id="@+id/tvRfInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Signal Strength: -100 dBm"
+        android:textColor="#00E676"
+        android:fontFamily="monospace"
+        android:textSize="14sp"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvRfLogs"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="8dp"/>
+
+    <Button
+        android:id="@+id/btnRfRecord"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="START CAPTURE RAW"
+        android:layout_marginTop="8dp"
+        app:backgroundTint="#D32F2F"
+        android:textColor="#FFFFFF"/>
+
+</LinearLayout>
