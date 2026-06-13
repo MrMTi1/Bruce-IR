@@ -117,7 +117,11 @@ class BluetoothActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            hidDevice?.unregisterApp()
+            try {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED || Build.VERSION.SDK_INT < 31) {
+                    hidDevice?.unregisterApp()
+                }
+            } catch (e: SecurityException) {}
             adapter?.closeProfileProxy(BluetoothProfile.HID_DEVICE, hidDevice)
         }
     }

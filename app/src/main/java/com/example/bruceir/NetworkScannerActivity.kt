@@ -104,7 +104,7 @@ class NetworkScannerActivity : AppCompatActivity() {
                         
                         runOnUiThread {
                             val info = if (detectedServices.isEmpty()) "No open ports" else detectedServices.joinToString(", ")
-                            foundHosts.add(DeviceInfo(host, hostname, info, "General Device"))
+                            foundHosts.add(DeviceInfo(host, hostname, info, "General Device", "Unknown"))
                             foundHosts.sortBy { it.ip }
                             adapter.notifyDataSetChanged()
                         }

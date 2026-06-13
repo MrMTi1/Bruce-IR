@@ -1,15 +1,19 @@
 package com.example.bruceir
 
+import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
 import android.bluetooth.le.AdvertiseSettings
 import android.bluetooth.le.BluetoothLeAdvertiser
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
+import androidx.core.content.ContextCompat
 
-class BleSpamManager {
+class BleSpamManager(private val context: Context) {
 
     private val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()
     private var advertiser: BluetoothLeAdvertiser? = null
@@ -27,6 +31,13 @@ class BleSpamManager {
 
     fun startSpam() {
         if (isSpamming) return
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_ADVERTISE) != PackageManager.PERMISSION_GRANTED) {
+                return
+            }
+        }
+
         advertiser = bluetoothAdapter?.bluetoothLeAdvertiser
         if (advertiser == null) return
 
@@ -44,16 +55,21 @@ class BleSpamManager {
             .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_HIGH)
             .build()
 
-        payloads.forEach { payload ->
-            val data = AdvertiseData.Builder()
-                .addManufacturerData(0x004C, payload) // 0x004C = Apple
-                .build()
+        try {
+            payloads.forEach { payload ->
+                val data = AdvertiseData.Builder()
+                    .addManufacturerData(0x004C, payload) // 0x004C = Apple
+                    .build()
 
-            advertiser?.startAdvertising(settings, data, object : AdvertiseCallback() {
-                override fun onStartSuccess(settingsInEffect: AdvertiseSettings?) {
-                    super.onStartSuccess(settingsInEffect)
-                }
-            })
+                advertiser?.startAdvertising(settings, data, object : AdvertiseCallback() {
+                    override fun onStartSuccess(settingsInEffect: AdvertiseSettings?) {
+                        super.onStartSuccess(settingsInEffect)
+                    }
+                })
+            }
+        } catch (e: SecurityException) {
+            isSpamming = false
+            return
         }
 
         handler.postDelayed({ 
@@ -68,6 +84,14 @@ class BleSpamManager {
     }
 
     private fun stopSpamInternal() {
-        advertiser?.stopAdvertising(object : AdvertiseCallback() {})
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_ADVERTISE) == PackageManager.PERMISSION_GRANTED) {
+                    advertiser?.stopAdvertising(object : AdvertiseCallback() {})
+                }
+            } else {
+                advertiser?.stopAdvertising(object : AdvertiseCallback() {})
+            }
+        } catch (e: SecurityException) {}
     }
 }
