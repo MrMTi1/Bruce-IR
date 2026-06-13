@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?android:attr/windowBackground">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/advanced_title"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#FF5722"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- Sekcja WPS -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            style="@style/Widget.Material3.CardView.Elevated">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/advanced_wifi_wps"
+                    android:textStyle="bold"/>
+                <EditText
+                    android:id="@+id/etWpsPin"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="8-digit PIN"
+                    android:inputType="number"
+                    android:layout_marginTop="8dp"/>
+                <Button
+                    android:id="@+id/btnConnectWps"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="GET PASSWORD"
+                    android:layout_marginTop="8dp"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Sekcja C2 Bridge -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/Widget.Material3.CardView.Elevated">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/advanced_c2_bridge"
+                    android:textStyle="bold"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/advanced_c2_host"
+                    android:layout_marginTop="12dp"
+                    android:textSize="12sp"/>
+                <EditText
+                    android:id="@+id/etC2Host"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="attacker.com or 1.2.3.4"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/advanced_c2_port"
+                    android:textSize="12sp"/>
+                <EditText
+                    android:id="@+id/etC2Port"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="4444"
+                    android:inputType="number"/>
+                <Button
+                    android:id="@+id/btnStartBridge"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/advanced_start_bridge"
+                    android:layout_marginTop="16dp"
+                    style="@style/Widget.Material3.Button.TonalButton"/>
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/swSocksProxy"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Enable SOCKS5 Tunneling (Pivoting)"
+                    android:layout_marginTop="8dp"
+                    android:checked="true"/>
+
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/swPersistence"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Persistent Mode (Auto-Reconnect)"
+                    android:layout_marginTop="4dp"
+                    android:checked="true"/>
+
+                <TextView
+                    android:id="@+id/tvBridgeStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/advanced_c2_status"
+                    android:layout_marginTop="12dp"
+                    android:textSize="12sp"
+                    android:textColor="#999999"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Sekcja nRF24 RF Tools -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            style="@style/Widget.Material3.CardView.Elevated">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="nRF24 RF Tools"
+                    android:textStyle="bold"
+                    android:textColor="#4CAF50"/>
+
+                <Button
+                    android:id="@+id/btnNrfScan"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="SCAN FOR TARGETS (Mousejack)"
+                    android:layout_marginTop="12dp"/>
+
+                <TextView
+                    android:id="@+id/tvNrfResults"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Discovered: None"
+                    android:layout_marginTop="8dp"
+                    android:textSize="12sp"
+                    android:fontFamily="monospace"/>
+
+                <EditText
+                    android:id="@+id/etNrfPayload"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Ducky Script / Commands"
+                    android:layout_marginTop="12dp"/>
+
+                <Button
+                    android:id="@+id/btnNrfInject"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="INJECT PAYLOAD"
+                    style="@style/Widget.Material3.Button.TonalButton"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+    </LinearLayout>
+</ScrollView>

@@ -90,4 +90,16 @@
     <string name="confirm_title">Potwierdź operację</string>
     <string name="confirm_delete_msg">Czy na pewno chcesz usunąć ten element?</string>
     <string name="confirm_move_msg">Czy na pewno chcesz przenieść ten element?</string>
+    <string name="intercom_title">Krótkofalówka Bruce</string>
+    <string name="intercom_ptt_hold">NACIŚNIJ I MÓW</string>
+    <string name="intercom_spy_mode">TRYB PODSŁUCHU</string>
+    <string name="intercom_mute_bruce">WYCISZ GŁOŚNIK BRUCE</string>
+    <string name="intercom_connecting">Łączenie ze strumieniem audio...</string>
+    <string name="advanced_title">Narzędzia Zaawansowane</string>
+    <string name="advanced_c2_bridge">Zdalny Most C2 (Reverse Shell)</string>
+    <string name="advanced_wifi_wps">Połączenie WPS (Pobieranie Hasła)</string>
+    <string name="advanced_c2_host">Adres serwera C2 (IP/Host):</string>
+    <string name="advanced_c2_port">Port C2:</string>
+    <string name="advanced_c2_status">Status Mostu: </string>
+    <string name="advanced_start_bridge">URUCHOM MOST</string>
 </resources>

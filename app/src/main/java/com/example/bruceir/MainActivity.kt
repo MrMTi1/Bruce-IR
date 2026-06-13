@@ -158,6 +158,10 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, LuxActivity::class.java))
         }
 
+        findViewById<ImageButton>(R.id.btnAdvanced).setOnClickListener {
+            startActivity(Intent(this, AdvancedActivity::class.java))
+        }
+
         findViewById<ImageButton>(R.id.btnRemote).setOnClickListener {
             showRemoteDialog()
         }
@@ -167,6 +171,10 @@ class MainActivity : AppCompatActivity() {
         }
 
         findViewById<ImageButton>(R.id.btnTvBGone).setOnClickListener { showTvBGoneDialog() }
+
+        findViewById<ImageButton>(R.id.btnIntercom).setOnClickListener {
+            startActivity(Intent(this, IntercomActivity::class.java))
+        }
 
         findViewById<ImageButton>(R.id.btnViewMode).setOnClickListener {
             isListView = !isListView
