@@ -1,77 +1,121 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="?android:attr/windowBackground"
-    android:padding="24dp">
+    android:orientation="vertical"
+    android:background="#121212">
 
-    <TextView
-        android:id="@+id/tvNavTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/nav_title"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="32dp"
-        android:textColor="#607D8B"/>
+    <!-- Live Screen View (z WebUI) -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="220dp"
+        android:layout_margin="16dp"
+        android:backgroundTint="#000000">
+        <WebView
+            android:id="@+id/wvScreen"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#000000" />
+    </androidx.cardview.widget.CardView>
 
+    <!-- DPAD Layout -->
     <GridLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
         android:columnCount="3"
-        android:rowCount="3">
+        android:rowCount="3"
+        android:padding="20dp"
+        android:layout_gravity="center">
 
-        <!-- Row 1 -->
-        <View android:layout_width="80dp" android:layout_height="80dp" />
-        <Button
+        <ImageButton
+            android:id="@+id/btnNavPageUp"
+            android:layout_width="0dp"
+            android:layout_height="80dp"
+            android:layout_columnWeight="1"
+            android:background="?attr/selectableItemBackground"
+            android:src="@android:drawable/ic_media_ff"
+            android:contentDescription="Next Page" />
+
+        <ImageButton
             android:id="@+id/btnNavUp"
-            android:layout_width="80dp"
+            android:layout_width="0dp"
             android:layout_height="80dp"
-            android:text="@string/nav_up"
-            style="@style/Widget.Material3.Button.TonalButton"/>
-        <View android:layout_width="80dp" android:layout_height="80dp" />
+            android:layout_columnWeight="1"
+            android:background="?attr/selectableItemBackground"
+            android:src="@android:drawable/arrow_up_float"
+            android:contentDescription="Up" />
 
-        <!-- Row 2 -->
-        <Button
-            android:id="@+id/btnNavLeft"
-            android:layout_width="80dp"
+        <ImageButton
+            android:id="@+id/btnNavMenu"
+            android:layout_width="0dp"
             android:layout_height="80dp"
-            android:text="@string/nav_left"
-            style="@style/Widget.Material3.Button.TonalButton"/>
-        <Button
-            android:id="@+id/btnNavOk"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:text="@string/nav_ok"
-            android:textStyle="bold"/>
-        <Button
-            android:id="@+id/btnNavRight"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:text="@string/nav_right"
-            style="@style/Widget.Material3.Button.TonalButton"/>
+            android:layout_columnWeight="1"
+            android:background="?attr/selectableItemBackground"
+            android:src="@android:drawable/ic_menu_more"
+            android:contentDescription="Menu" />
 
-        <!-- Row 3 -->
-        <View android:layout_width="80dp" android:layout_height="80dp" />
+        <ImageButton
+            android:id="@+id/btnNavPrev"
+            android:layout_width="0dp"
+            android:layout_height="80dp"
+            android:layout_columnWeight="1"
+            android:background="?attr/selectableItemBackground"
+            android:src="@android:drawable/ic_media_play"
+            android:rotation="180"
+            android:contentDescription="Left" />
+
         <Button
+            android:id="@+id/btnNavSel"
+            android:layout_width="0dp"
+            android:layout_height="80dp"
+            android:layout_columnWeight="1"
+            android:text="OK"
+            android:backgroundTint="#02de02"
+            android:textColor="#000000" />
+
+        <ImageButton
+            android:id="@+id/btnNavNext"
+            android:layout_width="0dp"
+            android:layout_height="80dp"
+            android:layout_columnWeight="1"
+            android:background="?attr/selectableItemBackground"
+            android:src="@android:drawable/ic_media_play"
+            android:contentDescription="Right" />
+
+        <ImageButton
+            android:id="@+id/btnNavPageDown"
+            android:layout_width="0dp"
+            android:layout_height="80dp"
+            android:layout_columnWeight="1"
+            android:background="?attr/selectableItemBackground"
+            android:src="@android:drawable/ic_media_rew"
+            android:contentDescription="Prev Page" />
+
+        <ImageButton
             android:id="@+id/btnNavDown"
-            android:layout_width="80dp"
+            android:layout_width="0dp"
             android:layout_height="80dp"
-            android:text="@string/nav_down"
-            style="@style/Widget.Material3.Button.TonalButton"/>
-        <View android:layout_width="80dp" android:layout_height="80dp" />
+            android:layout_columnWeight="1"
+            android:background="?attr/selectableItemBackground"
+            android:src="@android:drawable/arrow_down_float"
+            android:contentDescription="Down" />
 
+        <ImageButton
+            android:id="@+id/btnNavEsc"
+            android:layout_width="0dp"
+            android:layout_height="80dp"
+            android:layout_columnWeight="1"
+            android:background="?attr/selectableItemBackground"
+            android:src="@android:drawable/ic_menu_revert"
+            android:contentDescription="Back" />
     </GridLayout>
 
     <Button
-        android:id="@+id/btnNavBack"
-        android:layout_width="match_parent"
+        android:id="@+id/btnReloadScreen"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="32dp"
-        android:text="@string/nav_back"
-        style="@style/Widget.Material3.Button.OutlinedButton"/>
+        android:text="RELOAD SCREEN"
+        android:layout_gravity="center"
+        style="@style/Widget.Material3.Button.TextButton" />
 
-</RelativeLayout>
+</LinearLayout>

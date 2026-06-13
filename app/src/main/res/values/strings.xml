@@ -94,13 +94,13 @@
     <string name="intercom_title">Bruce Walkie-Talkie</string>
     <string name="intercom_ptt_hold">PUSH TO TALK</string>
     <string name="intercom_spy_mode">SPY MODE (Listen)</string>
-    <string name="intercom_mute_bruce">MUTE BRUCE SPEAKER</string>
-    <string name="intercom_connecting">Connecting to audio stream…</string>
     <string name="intercom_ready">READY</string>
     <string name="intercom_talking">TALKING…</string>
+    <string name="intercom_connecting">Connecting...</string>
+    <string name="intercom_mute_bruce">Mute Device</string>
 
     <string name="advanced_title">Bruce Advanced Tools</string>
-    <string name="advanced_c2_bridge">Remote C2 Bridge (Reverse Shell)</string>
+    <string name="advanced_c2_bridge">Remote C2 Bridge</string>
     <string name="advanced_wifi_wps">WPS PIN Password Grabber</string>
     <string name="advanced_c2_host">C2 Server IP/Host:</string>
     <string name="advanced_c2_port">C2 Port:</string>

@@ -21,7 +21,13 @@ class NetworkScannerActivity : AppCompatActivity() {
     private lateinit var adapter: HostAdapter
     private val foundHosts = mutableListOf<DeviceInfo>()
 
-    data class DeviceInfo(val ip: String, val hostname: String, val ports: String)
+    data class DeviceInfo(
+        val ip: String,
+        val hostname: String,
+        val ports: String,
+        val deviceType: String,
+        val manufacturer: String = "Unknown"
+    )
 
     override fun attachBaseContext(newBase: Context) {
         val prefs = newBase.getSharedPreferences("settings", MODE_PRIVATE)
@@ -98,7 +104,7 @@ class NetworkScannerActivity : AppCompatActivity() {
                         
                         runOnUiThread {
                             val info = if (detectedServices.isEmpty()) "No open ports" else detectedServices.joinToString(", ")
-                            foundHosts.add(DeviceInfo(host, hostname, info))
+                            foundHosts.add(DeviceInfo(host, hostname, info, "General Device"))
                             foundHosts.sortBy { it.ip }
                             adapter.notifyDataSetChanged()
                         }
