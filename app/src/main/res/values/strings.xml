@@ -163,4 +163,11 @@
     <string name="immo_type">TYPE:</string>
     <string name="immo_emulate">EMULATE TAG</string>
     <string name="immo_cloned">Tag cloned successfully!</string>
+    <string name="login_title">Connect to Bruce</string>
+    <string name="login_ip_hint">Bruce IP (e.g. 192.168.1.100)</string>
+    <string name="login_user_hint">Username</string>
+    <string name="login_pass_hint">Password</string>
+    <string name="login_btn_test">TEST &amp; SAVE</string>
+    <string name="login_success">Successfully connected to Bruce!</string>
+    <string name="login_fail">Connection failed. Check IP/Credentials.</string>
 </resources>

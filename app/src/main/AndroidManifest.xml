@@ -60,6 +60,7 @@
         <activity android:name=".RfAnalyzerActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".SerialConsoleActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".NetworkScannerActivity" android:exported="false" android:screenOrientation="portrait" />
+        <activity android:name=".LoginActivity" android:exported="false" android:screenOrientation="portrait" />
         <activity android:name=".AdvancedActivity" android:exported="false" android:screenOrientation="portrait" />
 
     </application>

@@ -149,7 +149,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnSysNet).setOnClickListener { startActivity(Intent(this, NetworkScannerActivity::class.java)) }
         findViewById<ImageButton>(R.id.btnSysConsole).setOnClickListener { startActivity(Intent(this, SerialConsoleActivity::class.java)) }
         findViewById<Button>(R.id.btnSysNav).setOnClickListener { startActivity(Intent(this, NavigatorActivity::class.java)) }
-        findViewById<Button>(R.id.btnSysRemote).setOnClickListener { showRemoteConfigDialog() }
+        findViewById<Button>(R.id.btnSysRemote).setOnClickListener { startActivity(Intent(this, LoginActivity::class.java)) }
     }
 
     private fun showRemoteConfigDialog() {
