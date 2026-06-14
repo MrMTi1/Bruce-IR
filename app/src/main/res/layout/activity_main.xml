@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#121212">
+    android:background="#121212"
+    android:fitsSystemWindows="true">
 
     <!-- Top Toolbar -->
     <LinearLayout
@@ -16,7 +17,7 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="60dp"
+            android:layout_height="64dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingStart="16dp"
@@ -24,8 +25,8 @@
 
             <ImageView
                 android:id="@+id/ivLogo"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
                 android:src="@drawable/bruceirbymti"
                 android:scaleType="centerInside" />
 
@@ -37,7 +38,7 @@
                 android:layout_marginStart="12dp"
                 android:text="BRUCE IR"
                 android:textColor="#F44336"
-                android:textSize="18sp"
+                android:textSize="16sp"
                 android:textStyle="bold" />
 
             <View
@@ -49,24 +50,27 @@
 
             <ImageButton
                 android:id="@+id/btnSearch"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_search" />
+                android:src="@android:drawable/ic_menu_search"
+                app:tint="#FFFFFF" />
 
             <ImageButton
                 android:id="@+id/btnViewMode"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_sort_by_size" />
+                android:src="@android:drawable/ic_menu_sort_by_size"
+                app:tint="#FFFFFF" />
 
             <ImageButton
                 android:id="@+id/btnLock"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_secure" />
+                android:src="@android:drawable/ic_secure"
+                app:tint="#FFFFFF" />
         </LinearLayout>
 
         <EditText
@@ -137,8 +141,9 @@
             android:layout_height="wrap_content"
             android:columnCount="2"
             android:padding="16dp">
-            <Button android:id="@+id/btnSysNet" android:text="NET SCAN" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_margin="4dp"/>
+            <Button android:id="@+id/btnSysRemote" android:text="BRUCE REMOTE" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_margin="4dp" style="@style/Widget.Material3.Button.TonalButton"/>
             <Button android:id="@+id/btnSysNav" android:text="NAVIGATOR" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_margin="4dp"/>
+            <Button android:id="@+id/btnSysNet" android:text="NET SCAN" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_margin="4dp"/>
             <Button android:id="@+id/btnSysConsole" android:text="SERIAL OTG" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_margin="4dp"/>
         </GridLayout>
     </ScrollView>

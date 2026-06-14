@@ -13,6 +13,9 @@ import androidx.core.content.ContextCompat
 class AdvancedActivity : AppCompatActivity() {
 
     private lateinit var bleSpamManager: BleSpamManager
+    private lateinit var baseUrl: String
+    private lateinit var user: String
+    private lateinit var pass: String
 
     private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
         if (permissions[Manifest.permission.BLUETOOTH_ADVERTISE] == true) {
@@ -36,6 +39,10 @@ class AdvancedActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.btnOpenScanner).setOnClickListener {
             startActivity(android.content.Intent(this, NetworkScannerActivity::class.java))
+        }
+
+        findViewById<Button>(R.id.btnOpenPrinterAttack).setOnClickListener {
+            startActivity(android.content.Intent(this, PrinterAttackActivity::class.java))
         }
 
         // WPS Section
@@ -184,8 +191,8 @@ class AdvancedActivity : AppCompatActivity() {
             .setView(layout)
             .setPositiveButton(R.string.immo_scan) { _, _ ->
                 Thread {
-                    val url = "http://bruce.local/rfid/scan"
-                    val response = BruceUtils.downloadFileContent(url, "admin", "bruce")
+                    val url = "$baseUrl/rfid/scan"
+                    val response = BruceUtils.downloadFileContent(url, user, pass)
                     runOnUiThread {
                         if (response != null) {
                             AlertDialog.Builder(this).setTitle("RFID Tag Found").setMessage(response).setPositiveButton("OK", null).show()
@@ -205,8 +212,8 @@ class AdvancedActivity : AppCompatActivity() {
             .setView(layout)
             .setPositiveButton("START EMULATION") { _, _ ->
                 Thread {
-                    val url = "http://bruce.local/rfid/emulate?uid=${etId.text}"
-                    BruceUtils.downloadFileContent(url, "admin", "bruce")
+                    val url = "$baseUrl/rfid/emulate?uid=${etId.text}"
+                    BruceUtils.downloadFileContent(url, user, pass)
                 }.start()
             }.show()
     }
@@ -222,8 +229,8 @@ class AdvancedActivity : AppCompatActivity() {
             .setView(layout)
             .setPositiveButton(R.string.weather_send) { _, _ ->
                 Thread {
-                    val url = "http://bruce.local/rf/weather?temp=${etTemp.text}&hum=${etHum.text}"
-                    BruceUtils.downloadFileContent(url, "admin", "bruce")
+                    val url = "$baseUrl/rf/weather?temp=${etTemp.text}&hum=${etHum.text}"
+                    BruceUtils.downloadFileContent(url, user, pass)
                 }.start()
             }.show()
     }
@@ -239,8 +246,8 @@ class AdvancedActivity : AppCompatActivity() {
             .setView(layout)
             .setPositiveButton("EMULATE ALARM") { _, _ ->
                 Thread {
-                    val url = "http://bruce.local/rf/tpms?id=${etId.text}&press=${etPress.text}&status=alert"
-                    BruceUtils.downloadFileContent(url, "admin", "bruce")
+                    val url = "$baseUrl/rf/tpms?id=${etId.text}&press=${etPress.text}&status=alert"
+                    BruceUtils.downloadFileContent(url, user, pass)
                 }.start()
             }.setNeutralButton("SCAN", { _, _ ->
                 Toast.makeText(this, "Bruce is listening for TPMS packets...", Toast.LENGTH_LONG).show()

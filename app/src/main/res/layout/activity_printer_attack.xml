@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?android:attr/windowBackground">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/printer_attack_title"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#9C27B0"
+            android:layout_marginBottom="24dp"/>
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/Widget.Material3.CardView.Elevated">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Attack Source:"
+                    android:textSize="12sp"
+                    android:textStyle="bold"/>
+
+                <RadioGroup
+                    android:id="@+id/rgSource"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="4dp">
+                    <RadioButton
+                        android:id="@+id/rbPhone"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Direct Phone"
+                        android:checked="true"/>
+                    <RadioButton
+                        android:id="@+id/rbBruce"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Bruce Proxy"
+                        android:layout_marginStart="16dp"/>
+                </RadioGroup>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/printer_target_ip"
+                    android:layout_marginTop="16dp"
+                    android:textSize="12sp"/>
+                <EditText
+                    android:id="@+id/etPrinterIp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="192.168.1.50"
+                    android:inputType="textUri"
+                    android:autofillHints="none"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/printer_text"
+                    android:layout_marginTop="12dp"
+                    android:textSize="12sp"/>
+                <EditText
+                    android:id="@+id/etPrintText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="HACKED"
+                    android:autofillHints="none"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/printer_delay"
+                    android:layout_marginTop="12dp"
+                    android:textSize="12sp"/>
+                <EditText
+                    android:id="@+id/etPrintDelay"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="5"
+                    android:inputType="number"
+                    android:autofillHints="none"/>
+
+                <Button
+                    android:id="@+id/btnStartPrinter"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/printer_start"
+                    android:layout_marginTop="24dp"
+                    style="@style/Widget.Material3.Button.TonalButton"/>
+
+                <Button
+                    android:id="@+id/btnStopPrinter"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/printer_stop"
+                    android:visibility="gone"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:textColor="#F44336"/>
+
+                <TextView
+                    android:id="@+id/tvPrinterStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ready"
+                    android:layout_marginTop="12dp"
+                    android:textSize="12sp"
+                    android:alpha="0.6"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+    </LinearLayout>
+</ScrollView>

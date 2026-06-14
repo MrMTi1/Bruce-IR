@@ -18,11 +18,17 @@ object BruceUtils {
     }
 
     fun downloadBinaryFile(url: String, user: String, pass: String): ByteArray? {
-        val finalUrl = if (!url.startsWith("http")) {
+        var finalUrl = if (!url.startsWith("http")) {
             if (url.startsWith("/")) "http://bruce.local$url"
             else "http://$url"
         } else url
         
+        // Zabezpieczenie: jeśli ktoś wpisał samo IP bez / na końcu i bez parametrów
+        if (finalUrl.count { it == '/' } == 2) {
+             // np. http://192.168.1.1 -> dodaj / na końcu
+             finalUrl += "/"
+        }
+
         Log.d("BruceIR", "Pobieranie binarne z URL: $finalUrl")
         return try {
             val connection = URL(finalUrl).openConnection() as HttpURLConnection

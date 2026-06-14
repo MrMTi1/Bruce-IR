@@ -1,16 +1,16 @@
 <resources>
     <string name="app_name">BruceIR</string>
-    <string name="header_title_root">BruceIR</string>
+    <string name="header_title_root">BruceIR Pro</string>
     <string name="dialog_close">Close</string>
-    <string name="dialog_import_ir">Import .ir File</string>
-    <string name="dialog_new_folder">New Folder</string>
-    <string name="dialog_manual_button">Manual Button</string>
     <string name="dialog_ok">OK</string>
-    <string name="dialog_edit">Edit</string>
     <string name="dialog_cancel">Cancel</string>
     <string name="dialog_save">Save</string>
     <string name="dialog_delete">Delete</string>
     <string name="dialog_rename">Rename</string>
+    <string name="dialog_edit">Edit Item</string>
+    <string name="dialog_import_ir">Import .ir File</string>
+    <string name="dialog_new_folder">New Folder</string>
+    <string name="dialog_manual_button">Manual Button</string>
     <string name="hint_name">Name</string>
     <string name="label_name">Name:</string>
     <string name="label_raw_data">RAW Data:</string>
@@ -67,11 +67,10 @@
     <string name="search_hint">Search buttons…</string>
     <string name="folder_root">MAIN (ROOT)</string>
     <string name="remote_title">Bruce Remote Connect</string>
-    <string name="remote_connect">Connect</string>
 
     <string name="info_title">BruceIR By MTi</string>
     <string name="info_version">Version 4.0</string>
-    <string name="info_desc">The ultimate tool for RF &amp; IR enthusiasts.\n\n• TV-B-Gone: Mass shutdown.\n• IR Macro: Automation.\n• Bruce Remote: WebUI integration.\n• USB OTG: External IR support.\n• C2 Bridge: Reverse shell &amp; pivoting.\n• nRF24 Tools: Mousejacking &amp; Jamming.\n• BLE Spam: Pairing flood.\n• IMMO Tool: RFID key identification.</string>
+    <string name="info_desc">Powerful tool for RF and IR enthusiasts.\n\n• TV-B-Gone: Mass shutdown.\n• IR Macro: Automation.\n• Bruce Remote: WebUI integration.\n• USB OTG: External IR support.\n• C2 Bridge: Reverse shell &amp; pivoting.\n• nRF24 Tools: Mousejacking &amp; jamming.\n• BLE Spam: Bluetooth attacks.\n• IMMO Tool: RFID key identification.</string>
     <string name="info_github">Official GitHub Repository</string>
     <string name="info_change_lang">Change Language (PL/EN)</string>
 
@@ -94,12 +93,12 @@
     <string name="intercom_title">Bruce Walkie-Talkie</string>
     <string name="intercom_ptt_hold">PUSH TO TALK</string>
     <string name="intercom_spy_mode">SPY MODE (Listen)</string>
+    <string name="intercom_mute_bruce">MUTE BRUCE SPEAKER</string>
+    <string name="intercom_connecting">Connecting to audio stream…</string>
     <string name="intercom_ready">READY</string>
     <string name="intercom_talking">TALKING…</string>
-    <string name="intercom_connecting">Connecting...</string>
-    <string name="intercom_mute_bruce">Mute Device</string>
 
-    <string name="advanced_title">Bruce Advanced Tools</string>
+    <string name="advanced_title">Advanced Tools</string>
     <string name="advanced_c2_bridge">Remote C2 Bridge</string>
     <string name="advanced_wifi_wps">WPS PIN Password Grabber</string>
     <string name="advanced_c2_host">C2 Server IP/Host:</string>
@@ -108,19 +107,19 @@
     <string name="advanced_start_bridge">START BRIDGE</string>
     <string name="advanced_socks_tunnel">Enable SOCKS5 Tunneling (Pivoting)</string>
     <string name="advanced_persistence">Persistent Mode (Auto-Reconnect)</string>
-    <string name="advanced_nrf_tools">nRF24 RF Tools</string>
+    <string name="advanced_nrf_tools">nRF24 Tools</string>
     <string name="advanced_nrf_scan">SCAN MOUSEJACK</string>
     <string name="advanced_nrf_discovered">Discovered: </string>
     <string name="advanced_nrf_payload_hint">Ducky Script / Commands</string>
     <string name="advanced_nrf_inject">INJECT PAYLOAD</string>
-    <string name="advanced_nrf_jam">RF JAMMER (2.4GHz)</string>
+    <string name="advanced_nrf_jam">RF JAMMER</string>
 
     <string name="advanced_ble_title">BLE Spam Tools</string>
     <string name="advanced_ble_flood">START BLE PAIRING FLOOD</string>
     <string name="advanced_ble_stop">STOP BLE SPAM</string>
 
     <string name="net_scanner_title">Network Scanner</string>
-    <string name="net_scanner_scan">DEEP SCAN (Ports &amp; Hostnames)</string>
+    <string name="net_scanner_scan">DEEP SCAN</string>
     <string name="net_scanner_scanning">Scanning IPs 1-254…</string>
     <string name="net_scanner_found">Hosts Found: %1$d</string>
 
@@ -137,11 +136,11 @@
     <string name="agent_last_seen">Last seen: %1$s</string>
     <string name="agent_command_sent">Command queued for agent</string>
 
-    <string name="printer_attack_title">Printer Spam Attack</string>
+    <string name="printer_attack_title">Printer Attack</string>
     <string name="printer_target_ip">Printer IP:</string>
     <string name="printer_text">Text to print:</string>
-    <string name="printer_delay">Delay between pages (s):</string>
-    <string name="printer_start">START PRINTER ATTACK</string>
+    <string name="printer_delay">Delay (seconds):</string>
+    <string name="printer_start">START ATTACK</string>
     <string name="printer_stop">STOP ATTACK</string>
 
     <string name="bt_remote_title">Bluetooth HID Remote</string>
@@ -155,11 +154,11 @@
     <string name="weather_title">Weather Station Spoof</string>
     <string name="weather_temp">Temperature (°C):</string>
     <string name="weather_hum">Humidity (%):</string>
-    <string name="weather_send">SEND SPOOFED DATA</string>
+    <string name="weather_send">SEND FAKE DATA</string>
 
     <string name="immo_title">IMMO &amp; RFID Tool</string>
     <string name="immo_scan">SCAN KEY / TAG</string>
-    <string name="immo_detecting">Waiting for RFID tag...</string>
+    <string name="immo_detecting">Waiting for RFID tag…</string>
     <string name="immo_id">ID:</string>
     <string name="immo_type">TYPE:</string>
     <string name="immo_emulate">EMULATE TAG</string>
