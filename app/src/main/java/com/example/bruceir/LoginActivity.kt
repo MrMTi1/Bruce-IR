@@ -37,14 +37,24 @@ class LoginActivity : AppCompatActivity() {
 
             Thread {
                 val formattedUrl = if (url.startsWith("http")) url else "http://$url"
-                val pingUrl = if (formattedUrl.endsWith("/")) "${formattedUrl}ping" else "$formattedUrl/ping"
+                val pingUrl = if (formattedUrl.endsWith("/")) formattedUrl else "$formattedUrl/"
                 
                 val success = try {
                     val conn = URL(pingUrl).openConnection() as java.net.HttpURLConnection
+                    
+                    // Add Auth if provided
+                    if (user.isNotEmpty() && pass.isNotEmpty()) {
+                        val auth = android.util.Base64.encodeToString("$user:$pass".toByteArray(), android.util.Base64.NO_WRAP)
+                        conn.setRequestProperty("Authorization", "Basic $auth")
+                    }
+                    
                     conn.connectTimeout = 3000
                     conn.readTimeout = 3000
-                    conn.responseCode == 200
-                } catch (e: Exception) { false }
+                    conn.responseCode == 200 || conn.responseCode == 404 // 404 is still a "found" server
+                } catch (e: Exception) { 
+                    android.util.Log.e("BruceIR", "Connection failed to $pingUrl: ${e.message}")
+                    false 
+                }
 
                 runOnUiThread {
                     pb.visibility = View.GONE

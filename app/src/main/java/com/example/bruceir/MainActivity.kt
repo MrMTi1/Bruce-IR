@@ -73,7 +73,7 @@ class MainActivity : AppCompatActivity() {
         setupHeaderActions()
         
         load()
-        startHeartbeat()
+        heartbeatHandler.post(checkTask) // Start heartbeat immediately
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -85,36 +85,42 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    private fun startHeartbeat() {
-        val handler = Handler(Looper.getMainLooper())
-        val checkTask = object : Runnable {
-            override fun run() {
-                Thread {
-                    val prefs = getSharedPreferences("settings", MODE_PRIVATE)
-                    var baseUrl = prefs.getString("bruce_url", "http://bruce.local") ?: "http://bruce.local"
-                    if (!baseUrl.startsWith("http")) baseUrl = "http://$baseUrl"
-                    val pingUrl = if (baseUrl.endsWith("/")) "${baseUrl}ping" else "$baseUrl/ping"
+    private var heartbeatHandler = Handler(Looper.getMainLooper())
+    private val checkTask = object : Runnable {
+        override fun run() {
+            Thread {
+                val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+                val baseUrl = prefs.getString("bruce_url", "http://bruce.local") ?: "http://bruce.local"
+                val user = prefs.getString("bruce_user", "admin") ?: "admin"
+                val pass = prefs.getString("bruce_pass", "bruce") ?: "bruce"
+                
+                var formattedUrl = if (baseUrl.startsWith("http")) baseUrl else "http://$baseUrl"
+                if (!formattedUrl.endsWith("/")) formattedUrl += "/"
 
-                    val online = try {
-                        val conn = URL(pingUrl).openConnection()
-                        conn.connectTimeout = 1000
-                        conn.readTimeout = 1000
-                        val responseCode = (conn as java.net.HttpURLConnection).responseCode
-                        responseCode == 200
-                    } catch (e: Exception) { false }
-                    
-                    runOnUiThread {
-                        isBruceOnline = online
-                        findViewById<View>(R.id.vStatusDot).setBackgroundColor(if (online) Color.GREEN else Color.RED)
-                        if (currentFolder == allData) {
-                            findViewById<TextView>(R.id.tvHeaderTitle).text = if (online) "BRUCE ONLINE" else "BRUCE OFFLINE"
-                        }
+                val online = try {
+                    val conn = URL(formattedUrl).openConnection() as java.net.HttpURLConnection
+                    if (user.isNotEmpty() && pass.isNotEmpty()) {
+                        val auth = android.util.Base64.encodeToString("$user:$pass".toByteArray(), android.util.Base64.NO_WRAP)
+                        conn.setRequestProperty("Authorization", "Basic $auth")
                     }
-                }.start()
-                handler.postDelayed(this, 3000)
-            }
+                    conn.connectTimeout = 1500
+                    conn.readTimeout = 1500
+                    conn.responseCode in 200..404
+                } catch (e: Exception) { false }
+                
+                runOnUiThread {
+                    isBruceOnline = online
+                    findViewById<View>(R.id.vStatusDot).setBackgroundColor(if (online) Color.GREEN else Color.RED)
+                    
+                    val titleText = if (online) "BRUCE ONLINE" else "BRUCE OFFLINE"
+                    if (currentFolder == allData) {
+                        findViewById<TextView>(R.id.tvHeaderTitle).text = titleText
+                    }
+                    findViewById<TextView>(R.id.tvHeaderTitle).setTextColor(if (online) Color.parseColor("#4CAF50") else Color.parseColor("#F44336"))
+                }
+            }.start()
+            heartbeatHandler.postDelayed(this, 3000)
         }
-        handler.post(checkTask)
     }
 
     private fun setupNavigation() {
@@ -137,8 +143,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupCyberTools() {
-        findViewById<Button>(R.id.btnCyberTpms).setOnClickListener { showTpmsToolDialog() }
-        findViewById<Button>(R.id.btnCyberSubGhz).setOnClickListener { startActivity(Intent(this, SubGhzActivity::class.java)) }
+        findViewById<Button>(R.id.btnCyberTpms).setOnClickListener { startActivity(Intent(this, RfAnalyzerActivity::class.java).apply { putExtra("mode", "tpms") }) }
+        findViewById<Button>(R.id.btnCyberSubGhz).setOnClickListener { startActivity(Intent(this, RfAnalyzerActivity::class.java).apply { putExtra("mode", "subghz") }) }
         findViewById<Button>(R.id.btnCyberImmo).setOnClickListener { showImmoToolDialog() }
         findViewById<Button>(R.id.btnCyberBle).setOnClickListener { startActivity(Intent(this, AdvancedActivity::class.java).apply { putExtra("target", "ble") }) }
         findViewById<Button>(R.id.btnCyberC2).setOnClickListener { startActivity(Intent(this, AdvancedActivity::class.java).apply { putExtra("target", "bridge") }) }
@@ -150,15 +156,6 @@ class MainActivity : AppCompatActivity() {
         findViewById<ImageButton>(R.id.btnSysConsole).setOnClickListener { startActivity(Intent(this, SerialConsoleActivity::class.java)) }
         findViewById<Button>(R.id.btnSysNav).setOnClickListener { startActivity(Intent(this, NavigatorActivity::class.java)) }
         findViewById<Button>(R.id.btnSysRemote).setOnClickListener { startActivity(Intent(this, LoginActivity::class.java)) }
-    }
-
-    private fun showRemoteConfigDialog() {
-        val layout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(50, 40, 50, 10) }
-        val inputUrl = EditText(this).apply { hint = "IP Address"; setText("http://bruce.local") }
-        layout.addView(inputUrl)
-        AlertDialog.Builder(this).setTitle("Bruce URL").setView(layout).setPositiveButton("SAVE") { _, _ ->
-            getSharedPreferences("settings", MODE_PRIVATE).edit().putString("bruce_url", inputUrl.text.toString()).apply()
-        }.show()
     }
 
     private fun setupHeaderActions() {
@@ -246,6 +243,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun save(onDone: (() -> Unit)? = null) { BruceUtils.saveAllData(this, allData, onDone) }
+
+    private fun addToRecent(cmd: Command) {
+        val iterator = recentFolder.items.iterator()
+        while (iterator.hasNext()) { val item = iterator.next(); if (item is Command && item.name == cmd.name && item.pattern.contentEquals(cmd.pattern)) iterator.remove() }
+        recentFolder.items.add(0, Command(cmd.name, cmd.frequency, cmd.pattern.copyOf()))
+        if (recentFolder.items.size > 10) recentFolder.items.removeAt(recentFolder.items.size - 1)
+        save()
+    }
 
     private fun refreshList() {
         adapter.updateList(currentFolder.items)
@@ -339,14 +344,6 @@ class MainActivity : AppCompatActivity() {
     private fun findSubfolders(root: IrFolder, list: MutableList<IrFolder>) { root.items.forEach { if (it is IrFolder) { list.add(it); findSubfolders(it, list) } } }
     private fun findAllFolders(root: IrFolder, list: MutableList<IrFolder>) { if (root.name == "RECENTLY USED") return; list.add(root); root.items.forEach { if (it is IrFolder) findAllFolders(it, list) } }
     private fun findParent(root: IrFolder, target: IrFolder): IrFolder? { for (item in root.items) { if (item is IrFolder) { if (item == target) return root; val found = findParent(item, target); if (found != null) return found } } ; return null }
-
-    private fun addToRecent(cmd: Command) {
-        val iterator = recentFolder.items.iterator()
-        while (iterator.hasNext()) { val item = iterator.next(); if (item is Command && item.name == cmd.name && item.pattern.contentEquals(cmd.pattern)) iterator.remove() }
-        recentFolder.items.add(0, Command(cmd.name, cmd.frequency, cmd.pattern.copyOf()))
-        if (recentFolder.items.size > 10) recentFolder.items.removeAt(recentFolder.items.size - 1)
-        save()
-    }
 
     private fun showInfoDialog() {
         val view = LayoutInflater.from(this).inflate(R.layout.dialog_info, null)

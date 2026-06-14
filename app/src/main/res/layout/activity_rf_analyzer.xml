@@ -1,83 +1,72 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="#000000"
-    android:padding="16dp">
+    android:padding="8dp">
 
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="CC1101 RF ANALYZER"
-        android:textColor="#00E676"
-        android:textSize="20sp"
+        android:text="RF SPECTRUM ANALYZER"
+        android:textColor="#00FF00"
         android:textStyle="bold"
-        android:layout_marginBottom="16dp"/>
+        android:gravity="center"
+        android:textSize="18sp"
+        android:layout_marginBottom="8dp"/>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginBottom="16dp">
+        android:layout_marginBottom="8dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Freq: "
+            android:text="Range: "
             android:textColor="#FFFFFF"/>
 
-        <EditText
-            android:id="@+id/etRfFreq"
+        <Spinner
+            android:id="@+id/spnRfRange"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="433.92"
-            android:textColor="#FFFFFF"
-            android:inputType="numberDecimal"
-            android:backgroundTint="#00E676"/>
+            android:backgroundTint="#FFFFFF"/>
 
         <Button
-            android:id="@+id/btnSetFreq"
+            android:id="@+id/btnStartRfScan"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="SET"
+            android:text="START"
             style="@style/Widget.Material3.Button.TonalButton"/>
     </LinearLayout>
 
-    <!-- Tu w przyszłości będzie dynamiczny wykres -->
-    <View
-        android:id="@+id/vSignalView"
+    <!-- Spectrogram (Current values) -->
+    <com.example.bruceir.RfGraphView
+        android:id="@+id/rfSpectrogram"
         android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:background="#1A1A1A"
-        android:layout_marginBottom="16dp"/>
+        android:layout_height="120dp"
+        android:background="#111111"
+        android:layout_marginBottom="4dp"/>
+
+    <!-- Waterfall (History) -->
+    <com.example.bruceir.WaterfallView
+        android:id="@+id/rfWaterfall"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#000000"/>
 
     <TextView
         android:id="@+id/tvRfInfo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Signal Strength: -100 dBm"
-        android:textColor="#00E676"
-        android:fontFamily="monospace"
-        android:textSize="14sp"/>
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvRfLogs"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginTop="8dp"/>
-
-    <Button
-        android:id="@+id/btnRfRecord"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="START CAPTURE RAW"
-        android:layout_marginTop="8dp"
-        app:backgroundTint="#D32F2F"
-        android:textColor="#FFFFFF"/>
+        android:text="Select range and press START"
+        android:textColor="#888888"
+        android:textSize="10sp"
+        android:layout_marginTop="4dp"/>
 
 </LinearLayout>

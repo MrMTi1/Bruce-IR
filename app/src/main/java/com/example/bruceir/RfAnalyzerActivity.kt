@@ -1,74 +1,81 @@
 package com.example.bruceir
 
-import android.content.Context
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
-import android.widget.Toast
+import android.os.Handler
+import android.os.Looper
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import java.util.*
+import java.net.URL
 
 class RfAnalyzerActivity : AppCompatActivity() {
 
-    private lateinit var baseUrl: String
-    private lateinit var user: String
-    private lateinit var pass: String
-    private var isRecording = false
-
-    override fun attachBaseContext(newBase: Context) {
-        val prefs = newBase.getSharedPreferences("settings", MODE_PRIVATE)
-        val lang = prefs.getString("lang", "en") ?: "en"
-        val locale = Locale(lang)
-        Locale.setDefault(locale)
-        val config = android.content.res.Configuration(newBase.resources.configuration)
-        config.setLocale(locale)
-        super.attachBaseContext(newBase.createConfigurationContext(config))
-    }
+    private lateinit var graph: RfGraphView
+    private lateinit var waterfall: WaterfallView
+    private var isScanning = false
+    private val handler = Handler(Looper.getMainLooper())
+    
+    private val ranges = arrayOf(
+        "300 - 348 MHz",
+        "387 - 464 MHz",
+        "779 - 928 MHz"
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_rf_analyzer)
 
-        val prefs = getSharedPreferences("settings", MODE_PRIVATE)
-        baseUrl = prefs.getString("bruce_url", "http://bruce.local") ?: "http://bruce.local"
-        user = prefs.getString("bruce_user", "admin") ?: "admin"
-        pass = prefs.getString("bruce_pass", "bruce") ?: "bruce"
+        graph = findViewById(R.id.rfSpectrogram)
+        waterfall = findViewById(R.id.rfWaterfall)
+        val btnStart = findViewById<Button>(R.id.btnStartRfScan)
+        val spnRange = findViewById<Spinner>(R.id.spnRfRange)
 
-        val etFreq = findViewById<EditText>(R.id.etRfFreq)
-        val tvInfo = findViewById<TextView>(R.id.tvRfInfo)
+        spnRange.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, ranges)
 
-        findViewById<Button>(R.id.btnSetFreq).setOnClickListener {
-            val freq = etFreq.text.toString()
-            Thread {
-                // Endpoint Bruce: /rf/config?freq=433.92
-                val url = "$baseUrl/rf/config?freq=$freq"
-                val response = BruceUtils.downloadFileContent(url, user, pass)
-                runOnUiThread { 
-                    Toast.makeText(this, "Bruce tuned to $freq MHz", Toast.LENGTH_SHORT).show()
-                }
-            }.start()
-        }
-
-        findViewById<Button>(R.id.btnRfRecord).setOnClickListener {
-            isRecording = !isRecording
-            val btn = it as Button
-            if (isRecording) {
-                btn.text = "STOP CAPTURE"
-                tvInfo.text = "Capturing RAW pulses via Bruce..."
-                // Komenda do Bruce'a: zacznij streamować RAW
-                sendCaptureCommand(true)
+        btnStart.setOnClickListener {
+            if (isScanning) {
+                isScanning = false
+                btnStart.text = "START"
             } else {
-                btn.text = "START CAPTURE RAW"
-                sendCaptureCommand(false)
+                isScanning = true
+                btnStart.text = "STOP"
+                startScanLoop(spnRange.selectedItemPosition)
             }
         }
     }
 
-    private fun sendCaptureCommand(start: Boolean) {
+    private fun startScanLoop(rangeIdx: Int) {
+        if (!isScanning) return
+
+        val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+        val baseUrl = prefs.getString("bruce_url", "http://bruce.local") ?: "http://bruce.local"
+        val user = prefs.getString("bruce_user", "admin") ?: "admin"
+        val pass = prefs.getString("bruce_pass", "bruce") ?: "bruce"
+
         Thread {
-            val url = "$baseUrl/rf/capture?action=${if (start) "start" else "stop"}"
-            BruceUtils.downloadFileContent(url, user, pass)
+            try {
+                // Nowy hakerski endpoint: /rf/spectrum_data?range=0
+                val url = "$baseUrl/rf/spectrum_data?range=$rangeIdx"
+                val response = BruceUtils.downloadBinaryFile(url, user, pass)
+                
+                if (response != null) {
+                    // RSSI to zwykle bajty (zrzut z rejestru CC1101)
+                    val rssiData = IntArray(response.size) { response[it].toInt() - 256 } // Konwersja na dBm (uproszczona)
+                    
+                    runOnUiThread {
+                        graph.updateData(rssiData)
+                        waterfall.addRow(rssiData)
+                    }
+                }
+            } catch (e: Exception) {}
+            
+            if (isScanning) {
+                handler.postDelayed({ startScanLoop(rangeIdx) }, 100)
+            }
         }.start()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        isScanning = false
     }
 }

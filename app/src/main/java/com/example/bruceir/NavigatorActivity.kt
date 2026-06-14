@@ -2,6 +2,7 @@ package com.example.bruceir
 
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.webkit.HttpAuthHandler
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -32,14 +33,33 @@ class NavigatorActivity : AppCompatActivity() {
 
     private fun setupWebView() {
         webView = findViewById(R.id.wvScreen)
-        webView.webViewClient = WebViewClient()
+        webView.webViewClient = object : WebViewClient() {
+            override fun onReceivedHttpAuthRequest(view: WebView?, handler: HttpAuthHandler?, host: String?, realm: String?) {
+                handler?.proceed(user, pass)
+            }
+        }
         webView.settings.javaScriptEnabled = true
-        // Ładujemy stronę która wyświetla ekran z Bruce'a (replika mechanizmu z WebUI)
-        val html = "<html><body style='margin:0;background:black;display:flex;justify-content:center;align-items:center;'>" +
-                   "<img id='screen' src='$baseUrl/getscreen' style='width:100%;image-rendering:pixelated;'/>" +
-                   "<script>setInterval(() => { document.getElementById('screen').src = '$baseUrl/getscreen?t=' + Date.now(); }, 1000);</script>" +
-                   "</body></html>"
-        webView.loadDataWithBaseURL(baseUrl, html, "text/html", "UTF-8", null)
+        
+        val cleanUrl = if (baseUrl.endsWith("/")) baseUrl else "$baseUrl/"
+        
+        // Replikacja mechanizmu odświeżania z WebUI Bruce'a z uwzględnieniem Auth
+        val html = """
+            <html>
+            <body style='margin:0;background:black;display:flex;justify-content:center;align-items:center;height:100vh;overflow:hidden;'>
+                <img id='screen' src='${cleanUrl}getscreen' style='width:100%; height:auto; image-rendering:pixelated;'/>
+                <script>
+                    function refresh() {
+                        const img = document.getElementById('screen');
+                        const timestamp = Date.now();
+                        img.src = '${cleanUrl}getscreen?t=' + timestamp;
+                    }
+                    setInterval(refresh, 1000);
+                </script>
+            </body>
+            </html>
+        """.trimIndent()
+        
+        webView.loadDataWithBaseURL(cleanUrl, html, "text/html", "UTF-8", null)
     }
 
     private fun setupButtons() {
@@ -50,29 +70,34 @@ class NavigatorActivity : AppCompatActivity() {
             R.id.btnNavNext to "next",
             R.id.btnNavSel to "sel",
             R.id.btnNavEsc to "esc",
-            R.id.btnNavMenu to "sel 500", // Long press per index.js
+            R.id.btnNavMenu to "sel 500",
             R.id.btnNavPageUp to "nextpage",
             R.id.btnNavPageDown to "prevpage"
         )
 
+        val cleanUrl = if (baseUrl.endsWith("/")) baseUrl.substring(0, baseUrl.length-1) else baseUrl
+
         mapping.forEach { (id, move) ->
             findViewById<android.view.View>(id).setOnClickListener {
                 vibrate()
-                sendMove(move)
+                sendMove(cleanUrl, move)
             }
         }
 
         findViewById<Button>(R.id.btnReloadScreen).setOnClickListener { webView.reload() }
     }
 
-    private fun sendMove(direction: String) {
+    private fun sendMove(url: String, direction: String) {
         Thread {
             try {
-                // Nowa logika zgodna z Twoim index.js: POST /cm z parametrem cmnd=nav direction
-                val url = "$baseUrl/cm"
-                val response = BruceUtils.downloadFileContent("$url?cmnd=nav+$direction", user, pass)
-                // Po ruchu odświeżamy obraz
-                runOnUiThread { webView.reload() }
+                // Bruce Firmware oczekuje: GET /cm?cmnd=nav+up
+                val fullUrl = "$url/cm?cmnd=nav+$direction"
+                BruceUtils.downloadFileContent(fullUrl, user, pass)
+                runOnUiThread { 
+                   android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                       webView.reload() 
+                   }, 200)
+                }
             } catch (e: Exception) {}
         }.start()
     }
