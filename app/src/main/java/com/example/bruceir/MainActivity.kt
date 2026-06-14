@@ -147,7 +147,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupSystemTools() {
         findViewById<Button>(R.id.btnSysNet).setOnClickListener { startActivity(Intent(this, NetworkScannerActivity::class.java)) }
-        findViewById<Button>(R.id.btnSysConsole).setOnClickListener { startActivity(Intent(this, SerialConsoleActivity::class.java)) }
+        findViewById<ImageButton>(R.id.btnSysConsole).setOnClickListener { startActivity(Intent(this, SerialConsoleActivity::class.java)) }
         findViewById<Button>(R.id.btnSysNav).setOnClickListener { startActivity(Intent(this, NavigatorActivity::class.java)) }
         findViewById<Button>(R.id.btnSysRemote).setOnClickListener { showRemoteConfigDialog() }
     }

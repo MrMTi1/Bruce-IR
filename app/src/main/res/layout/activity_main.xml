@@ -57,6 +57,14 @@
                 app:tint="#FFFFFF" />
 
             <ImageButton
+                android:id="@+id/btnSysConsole"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/stat_sys_data_bluetooth"
+                app:tint="#4CAF50" />
+
+            <ImageButton
                 android:id="@+id/btnViewMode"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
@@ -144,7 +152,6 @@
             <Button android:id="@+id/btnSysRemote" android:text="BRUCE REMOTE" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_margin="4dp" style="@style/Widget.Material3.Button.TonalButton"/>
             <Button android:id="@+id/btnSysNav" android:text="NAVIGATOR" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_margin="4dp"/>
             <Button android:id="@+id/btnSysNet" android:text="NET SCAN" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_margin="4dp"/>
-            <Button android:id="@+id/btnSysConsole" android:text="SERIAL OTG" android:layout_width="0dp" android:layout_columnWeight="1" android:layout_margin="4dp"/>
         </GridLayout>
     </ScrollView>
 
