@@ -253,10 +253,84 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showManagementMenu() {
-        val ops = arrayOf("Load .ir", "Import URL", "New Folder", "Manual Add", "Export DB", "Import DB")
+        val ops = arrayOf("Load .ir", "Import URL", "New Folder", "Manual Add", "Export DB", "Import DB", "BROWSE FLIPPER IRDB", "UPDATE DATABASE")
         AlertDialog.Builder(this).setTitle("Management").setItems(ops) { _, w ->
-            when (w) { 0 -> pickFile.launch("*/*"); 1 -> showImportUrlDialog(); 2 -> showAddFolder(); 3 -> showAddManual(); 4 -> exportLauncher.launch("BruceIR_Backup.json"); 5 -> importFullDbLauncher.launch("application/json") }
+            when (w) { 
+                0 -> pickFile.launch("*/*")
+                1 -> showImportUrlDialog()
+                2 -> showAddFolder()
+                3 -> showAddManual()
+                4 -> exportLauncher.launch("BruceIR_Backup.json")
+                5 -> importFullDbLauncher.launch("application/json")
+                6 -> showDbExplorer()
+                7 -> downloadFullDatabase()
+            }
         }.show()
+    }
+
+    private fun showDbExplorer() {
+        val file = java.io.File(getExternalFilesDir(null), "Flipper-IRDB-main.json")
+        if (!file.exists()) {
+            AlertDialog.Builder(this)
+                .setTitle("Database missing")
+                .setMessage("Flipper database is not found locally. Would you like to download it now? (380MB+)")
+                .setPositiveButton("DOWNLOAD") { _, _ -> downloadFullDatabase() }
+                .setNegativeButton("CANCEL", null)
+                .show()
+            return
+        }
+        startActivity(Intent(this, DeviceExplorerActivity::class.java))
+    }
+
+    private fun downloadFullDatabase() {
+        val baseUrlParts = "https://github.com/MrMTi1/Bruce-IR/raw/master/db_parts/part_"
+        val totalParts = 20
+        val progress = android.app.ProgressDialog(this).apply {
+            setTitle("Downloading IR Database")
+            setMessage("Please wait, file is large (380MB+)...")
+            setProgressStyle(android.app.ProgressDialog.STYLE_HORIZONTAL)
+            max = totalParts
+            setCancelable(false)
+            show()
+        }
+
+        Thread {
+            try {
+                val destFile = java.io.File(getExternalFilesDir(null), "Flipper-IRDB-main.json")
+                val output = destFile.outputStream()
+                
+                for (i in 1..totalParts) {
+                    val partName = String.format("%02d.bin", i)
+                    val url = baseUrlParts + partName
+                    
+                    runOnUiThread { 
+                        progress.setMessage("Downloading part $i/$totalParts...")
+                        progress.progress = i - 1
+                    }
+
+                    val conn = URL(url).openConnection() as java.net.HttpURLConnection
+                    conn.connectTimeout = 15000
+                    conn.readTimeout = 30000
+                    
+                    if (conn.responseCode == 200) {
+                        conn.inputStream.use { it.copyTo(output) }
+                    } else {
+                        throw Exception("Part $i failed with code ${conn.responseCode}")
+                    }
+                }
+                output.close()
+
+                runOnUiThread {
+                    progress.dismiss()
+                    Toast.makeText(this, "Database reconstructed successfully!", Toast.LENGTH_LONG).show()
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    progress.dismiss()
+                    Toast.makeText(this, "Download failed: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }.start()
     }
 
     private fun confirmAction(msgRes: Int, onConfirm: () -> Unit) { AlertDialog.Builder(this).setTitle("Confirm").setMessage(msgRes).setPositiveButton("OK") { _, _ -> onConfirm() }.setNegativeButton("Cancel", null).show() }
