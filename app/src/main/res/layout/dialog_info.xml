@@ -67,6 +67,13 @@
             android:text="@string/settings_click_sound"
             android:checked="true" />
 
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/swInstantBoot"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Instant Boot (No Splash)" />
+
         <TextView
             android:id="@+id/tvInfoDesc"
             android:layout_width="match_parent"

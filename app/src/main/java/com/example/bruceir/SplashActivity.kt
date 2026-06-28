@@ -19,13 +19,21 @@ class SplashActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_splash)
+        
+        val prefs = getSharedPreferences("settings", MODE_PRIVATE)
+        val isInstantBoot = prefs.getBoolean("instant_boot", false)
 
-        // Czas trwania splash screena: 2000ms = 2 sekundy
-        Handler(Looper.getMainLooper()).postDelayed({
-            val intent = Intent(this, MainActivity::class.java)
-            startActivity(intent)
+        if (isInstantBoot) {
+            startActivity(Intent(this, MainActivity::class.java))
             finish()
-        }, 2000)
+            return
+        }
+
+        setContentView(R.layout.activity_splash)
+        
+        Handler(Looper.getMainLooper()).postDelayed({
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
+        }, 1500)
     }
 }
