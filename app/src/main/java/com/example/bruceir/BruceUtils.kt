@@ -5,6 +5,9 @@ import android.util.Base64
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.URL
 import kotlin.math.abs
@@ -57,179 +60,464 @@ object BruceUtils {
 
     fun parseIrContent(content: String): List<Command> {
         val list = mutableListOf<Command>()
-        var name = ""; var freq = 38000
+        
+        val trimmedContent = content.trim()
+        if (trimmedContent.startsWith("{") || trimmedContent.startsWith("[")) {
+            return emptyList()
+        }
+
+        var name = ""
+        var freq = 38000
         var pattern: IntArray? = null
         var protocol: String? = null
+        var address: String? = null
+        var command: String? = null
 
         fun addCurrent() {
             if (name.isNotEmpty()) {
-                val finalName = if (protocol != null && pattern == null) "$name ($protocol)" else name
-                val finalPattern = pattern ?: intArrayOf(100, 100) // Dummy for parsed
-                list.add(Command(finalName, freq, finalPattern))
+                val effectivePattern = if (pattern != null && pattern!!.isNotEmpty()) {
+                    pattern!!
+                } else if (!protocol.isNullOrBlank() && (!address.isNullOrBlank() || !command.isNullOrBlank())) {
+                    try {
+                        IrProtocolEncoder.encodeToRawPattern(protocol!!, address ?: "0x0", command ?: "0x0")
+                    } catch (e: Exception) {
+                        intArrayOf(100, 100)
+                    }
+                } else {
+                    intArrayOf(100, 100)
+                }
+                val cmd = Command(name, if (freq > 0) freq else 38000, effectivePattern)
+                cmd.protocol = protocol
+                cmd.address = address
+                cmd.command = command
+                list.add(cmd)
             }
-            name = ""; freq = 38000; pattern = null; protocol = null
+            name = ""
+            freq = 38000
+            pattern = null
+            protocol = null
+            address = null
+            command = null
         }
 
         content.lines().forEach { line ->
             val t = line.trim()
-            if (t.startsWith("#")) {
-                addCurrent()
+            if (t.isEmpty() || t.startsWith("#")) {
                 return@forEach
             }
-            if (t.startsWith("name:")) name = t.substringAfter(":").trim()
-            if (t.startsWith("frequency:")) freq = t.substringAfter(":").trim().toIntOrNull() ?: 38000
-            if (t.startsWith("protocol:")) protocol = t.substringAfter(":").trim()
-            if (t.startsWith("data:")) {
-                val raw = t.substringAfter(":").trim().split(" ").filter { it.isNotEmpty() }.map { abs(it.trim().toInt()) }.toIntArray()
-                pattern = if (raw.getOrNull(0) == 0) raw.drop(1).toIntArray() else raw
+
+            val colonIdx = t.indexOf(':')
+            if (colonIdx != -1) {
+                val key = t.substring(0, colonIdx).trim().lowercase()
+                val value = t.substring(colonIdx + 1).trim()
+
+                when (key) {
+                    "name", "button", "key", "title", "label" -> {
+                        addCurrent()
+                        name = value
+                    }
+                    "frequency", "freq" -> {
+                        freq = value.toIntOrNull() ?: 38000
+                    }
+                    "protocol" -> {
+                        protocol = value
+                    }
+                    "address" -> {
+                        address = value
+                    }
+                    "command" -> {
+                        command = value
+                    }
+                    "data", "raw_data", "raw data" -> {
+                        val raw = value.split(Regex("[\\s,]+")).filter { it.isNotEmpty() }.map { abs(it.trim().toIntOrNull() ?: 0) }.toIntArray()
+                        pattern = if (raw.isNotEmpty() && raw[0] == 0) raw.drop(1).toIntArray() else raw
+                    }
+                }
+            } else {
+                val numbers = t.split(Regex("[\\s,]+")).mapNotNull { it.toIntOrNull() }
+                if (numbers.size > 3) {
+                    val raw = numbers.map { abs(it) }.toIntArray()
+                    pattern = if (raw.isNotEmpty() && raw[0] == 0) raw.drop(1).toIntArray() else raw
+                }
             }
         }
-        addCurrent() // Add last one
+        addCurrent()
+
+        if (list.isEmpty() && trimmedContent.isNotEmpty()) {
+            val allNumbers = trimmedContent.split(Regex("[\\s,]+")).mapNotNull { it.toIntOrNull() }
+            if (allNumbers.size > 3) {
+                val raw = allNumbers.map { abs(it) }.toIntArray()
+                val pat = if (raw.isNotEmpty() && raw[0] == 0) raw.drop(1).toIntArray() else raw
+                list.add(Command("Imported Signal", 38000, pat))
+            } else {
+                list.add(Command("Signal", 38000, intArrayOf(100, 100)))
+            }
+        }
+
+        Log.d("BruceIR", "Parsed ${list.size} commands from IR content.")
         return list
     }
 
     fun saveAllData(context: Context, allData: IrFolder, onDone: (() -> Unit)? = null) {
-        // Wykonujemy zapis w tle, aby nie blokować UI
-        Thread {
-            try {
-                val file = java.io.File(context.filesDir, "bruce_db.json")
-                val tempFile = java.io.File(context.filesDir, "bruce_db.json.tmp")
-                val backupFile = java.io.File(context.filesDir, "bruce_db.json.bak")
-
-                // Zapis do pliku tymczasowego
-                tempFile.writer().use { writer ->
-                    gson.toJson(allData, writer)
-                }
-
-                // Tworzenie kopii zapasowej poprzedniej wersji
-                if (file.exists()) {
-                    file.copyTo(backupFile, overwrite = true)
-                }
-
-                // Podmiana na nową wersję (atomowa na poziomie plików)
-                if (tempFile.renameTo(file)) {
-                    Log.d("BruceIR", "Zapisano bazę pomyślnie")
-                } else {
-                    // Jeśli rename zawiedzie, spróbujmy kopiowania
-                    tempFile.copyTo(file, overwrite = true)
-                    tempFile.delete()
-                }
+        // Zachowujemy wsteczną kompatybilność, ale logikę przenosimy do suspend
+        kotlinx.coroutines.GlobalScope.launch(Dispatchers.IO) {
+            saveAllDataSuspend(context, allData)
+            withContext(Dispatchers.Main) {
                 onDone?.invoke()
-            } catch (e: Exception) {
-                Log.e("BruceIR", "Save error: ${e.message}")
             }
-        }.start()
+        }
     }
 
-    fun loadAllData(context: Context): IrFolder {
+    suspend fun saveAllDataSuspend(context: Context, allData: IrFolder) = withContext(Dispatchers.IO) {
+        try {
+            val file = java.io.File(context.filesDir, "bruce_db.json")
+            val tempFile = java.io.File(context.filesDir, "bruce_db.json.tmp")
+            val backupFile = java.io.File(context.filesDir, "bruce_db.json.bak")
+
+            val cleanRoot = copyFolderWithoutFlipper(allData)
+
+            tempFile.writer().use { writer ->
+                gson.toJson(cleanRoot, writer)
+            }
+
+            if (file.exists()) {
+                file.copyTo(backupFile, overwrite = true)
+            }
+
+            if (tempFile.renameTo(file)) {
+                Log.d("BruceIR", "Zapisano bazę pomyślnie")
+            } else {
+                tempFile.copyTo(file, overwrite = true)
+                tempFile.delete()
+            }
+        } catch (e: Exception) {
+            Log.e("BruceIR", "Save error: ${e.message}")
+        }
+    }
+
+    private fun copyFolderWithoutFlipper(folder: IrFolder): IrFolder {
+        val newItems = mutableListOf<Any>()
+        folder.items.forEach { item ->
+            if (item is IrFolder) {
+                // Pomijamy tylko bazę zarządzaną przez aplikację (nie folder użytkownika,
+                // którego nazwa przypadkiem zawiera słowo "Flipper").
+                if (!BruceFlipperCache.isManagedFolderName(item.name)) {
+                    newItems.add(copyFolderWithoutFlipper(item))
+                }
+            } else {
+                newItems.add(item)
+            }
+        }
+        return IrFolder(folder.name, newItems)
+    }
+
+    suspend fun loadAllDataSuspend(context: Context): IrFolder = withContext(Dispatchers.IO) {
         val file = java.io.File(context.filesDir, "bruce_db.json")
         val backupFile = java.io.File(context.filesDir, "bruce_db.json.bak")
         
-        // 1. Spróbuj załadować główny plik
-        if (file.exists()) {
+        var loadedRoot: IrFolder? = null
+
+        if (file.exists() && file.length() > 0L) {
             try {
-                return streamParseJson(file.reader())
+                file.reader().use { reader ->
+                    loadedRoot = streamParseJson(reader)
+                }
             } catch (e: Exception) {
-                Log.e("BruceIR", "Błąd ładowania głównej bazy, próbuję kopię zapasową: ${e.message}")
+                Log.e("BruceIR", "Błąd ładowania głównej bazy: ${e.message}")
             }
         }
 
-        // 2. Jeśli główny zawiedzie, spróbuj kopię zapasową
-        if (backupFile.exists()) {
+        if (loadedRoot == null && backupFile.exists() && backupFile.length() > 0L) {
             try {
-                val root = streamParseJson(backupFile.reader())
-                // Przywróć kopię do głównego pliku
+                backupFile.reader().use { reader ->
+                    loadedRoot = streamParseJson(reader)
+                }
                 backupFile.copyTo(file, overwrite = true)
-                return root
             } catch (e: Exception) {
                 Log.e("BruceIR", "Błąd ładowania kopii zapasowej: ${e.message}")
             }
         }
 
-        // 3. Ostateczność: stare SharedPreferences (z poprzednich wersji)
-        val prefs = context.getSharedPreferences("ir_prefs", Context.MODE_PRIVATE)
-        val json = prefs.getString("full_data_final", null)
-        if (json != null) {
+        if (loadedRoot == null) {
             try {
-                val root = streamParseJson(json.reader())
-                saveAllData(context, root)
-                return root
-            } catch (e: Exception) {}
+                val prefs = context.getSharedPreferences("ir_prefs", Context.MODE_PRIVATE)
+                val json = prefs.getString("full_data_final", null)
+                if (!json.isNullOrBlank()) {
+                    json.reader().use { reader ->
+                        loadedRoot = streamParseJson(reader)
+                    }
+                    saveAllDataSuspend(context, loadedRoot!!)
+                }
+            } catch (e: Exception) {
+                Log.e("BruceIR", "Błąd ładowania SharedPreferences: ${e.message}")
+            }
         }
 
-        return IrFolder("ROOT")
+        val root = loadedRoot ?: IrFolder("ROOT")
+        ensureBuiltInFlipperDb(context, root)
+        return@withContext root
+    }
+
+    fun loadAllData(context: Context): IrFolder {
+        val file = java.io.File(context.filesDir, "bruce_db.json")
+        val root = if (file.exists() && file.length() > 0L) {
+            try {
+                file.reader().use { reader ->
+                    streamParseJson(reader)
+                }
+            } catch (e: Exception) {
+                IrFolder("ROOT")
+            }
+        } else {
+            IrFolder("ROOT")
+        }
+        ensureBuiltInFlipperDb(context, root)
+        return root
+    }
+
+    fun ensureBuiltInFlipperDb(context: Context, root: IrFolder) {
+        removeFlipperFoldersRecursively(root)
+
+        val targetFolder = root.items.filterIsInstance<IrFolder>().firstOrNull {
+            it.name.contains("Kody i piloty IR", ignoreCase = true) ||
+            it.name.contains("PILOTY", ignoreCase = true)
+        } ?: root
+
+        // Jeden zarządzany folder-placeholder, zawsze na początku listy pilotów.
+        BruceFlipperCache.locateOrCreate(targetFolder)
+    }
+
+    private fun removeFlipperFoldersRecursively(folder: IrFolder) {
+        folder.items.removeAll { it is IrFolder && BruceFlipperCache.isManagedFolderName(it.name) }
+        folder.items.forEach {
+            if (it is IrFolder) removeFlipperFoldersRecursively(it)
+        }
+    }
+
+    fun parseJsonContent(content: String): Any? {
+        return try {
+            val trimmed = content.trim()
+            if (trimmed.startsWith("{")) {
+                streamParseJson(trimmed.reader())
+            } else if (trimmed.startsWith("[")) {
+                val type = object : TypeToken<List<Map<String, Any>>>() {}.type
+                val rawList: List<Map<String, Any>> = gson.fromJson(trimmed, type)
+                val items = mutableListOf<Any>()
+                rawList.forEach { map ->
+                    val name = map["name"]?.toString() ?: map["title"]?.toString() ?: map["brand"]?.toString() ?: "Item"
+                    val freq = (map["frequency"] as? Number)?.toInt() ?: (map["freq"] as? Number)?.toInt() ?: 38000
+                    val patternRaw = map["pattern"] ?: map["data"] ?: map["timings"]
+                    val pattern = when (patternRaw) {
+                        is List<*> -> patternRaw.mapNotNull { (it as? Number)?.toInt() }.toIntArray()
+                        else -> intArrayOf()
+                    }
+                    val protocol = map["protocol"]?.toString() ?: map["type"]?.toString()
+                    val address = map["address"]?.toString() ?: map["addr"]?.toString()
+                    val command = map["command"]?.toString() ?: map["cmd"]?.toString() ?: map["code"]?.toString()
+
+                    val cmd = Command(name, freq, pattern)
+                    cmd.protocol = protocol
+                    cmd.address = address
+                    cmd.command = command
+                    items.add(cmd)
+                }
+                IrFolder("GitHub JSON Import", items)
+            } else null
+        } catch (e: Exception) {
+            null
+        }
     }
 
     fun streamParseJson(reader: java.io.Reader): IrFolder {
         val jsonReader = com.google.gson.stream.JsonReader(reader)
+        jsonReader.isLenient = true
         return readFolder(jsonReader)
     }
 
     private fun readFolder(reader: com.google.gson.stream.JsonReader): IrFolder {
-        var name = "UNKNOWN"
+        var name = "Nowy Folder"
         val items = mutableListOf<Any>()
         
-        reader.beginObject()
-        while (reader.hasNext()) {
-            when (reader.nextName()) {
-                "name" -> name = reader.nextString()
-                "items" -> {
-                    reader.beginArray()
-                    while (reader.hasNext()) {
-                        items.add(readItem(reader))
+        try {
+            reader.beginObject()
+            while (reader.hasNext()) {
+                val propName = reader.nextName().lowercase()
+                when (propName) {
+                    "name", "title", "label", "brand", "model", "remote" -> {
+                        try {
+                            val n = reader.nextString()
+                            name = when {
+                                n.isEmpty() || n == "UNKNOWN" -> "Nowy Folder"
+                                n == "ROOT" -> "Moje Piloty"
+                                else -> n
+                            }
+                        } catch (_: Exception) { reader.skipValue() }
                     }
-                    reader.endArray()
+                    "items", "remotes", "devices", "commands", "buttons", "keys", "categories", "subcategories", "children" -> {
+                        try {
+                            reader.beginArray()
+                            while (reader.hasNext()) {
+                                try {
+                                    val item = readItem(reader)
+                                    if (item != null) items.add(item)
+                                } catch (e: Exception) {
+                                    try { reader.skipValue() } catch (_: Exception) {}
+                                }
+                            }
+                            reader.endArray()
+                        } catch (e: Exception) {
+                            try { reader.skipValue() } catch (_: Exception) {}
+                        }
+                    }
+                    else -> reader.skipValue()
                 }
-                else -> reader.skipValue()
             }
+            reader.endObject()
+        } catch (e: Exception) {
+            Log.e("BruceIR", "readFolder error: ${e.message}")
         }
-        reader.endObject()
         return IrFolder(name, items)
     }
 
-    private fun readItem(reader: com.google.gson.stream.JsonReader): Any {
-        var type = ""
+    private fun readItem(reader: com.google.gson.stream.JsonReader): Any? {
         var name = ""
         var freq = 38000
-        var pattern = intArrayOf()
-        var icon: String? = null
-        val folderItems = mutableListOf<Any>()
+        val patternList = mutableListOf<Int>()
+        var protocol: String? = null
+        var address: String? = null
+        var command: String? = null
+        val subItems = mutableListOf<Any>()
+        var hasSubFoldersOrItems = false
+        var explicitType: String? = null
 
-        // Musimy czytać obiekt dwa razy lub zapamiętywać pola, bo 'type' może być na końcu
-        // Ale BruceIR JSON ma 'type' zwykle na początku lub w stałym miejscu.
-        // Dla pewności przeczytamy jako JsonObject i skonwertujemy - to nadal lepsze niż Map<String, Any>
-        val obj = com.google.gson.JsonParser.parseReader(reader).asJsonObject
-        type = obj.get("type")?.asString ?: "cmd"
-        name = obj.get("name")?.asString ?: ""
-        
-        if (type == "folder") {
-            val itemsArr = obj.getAsJsonArray("items")
-            itemsArr?.forEach { folderItems.add(readItemFromJson(it.asJsonObject)) }
-            return IrFolder(name, folderItems)
+        try {
+            reader.beginObject()
+            while (reader.hasNext()) {
+                val propName = reader.nextName().lowercase()
+                val peek = reader.peek()
+                when (propName) {
+                    "name", "title", "label", "brand", "model", "remote" -> {
+                        if (peek == com.google.gson.stream.JsonToken.STRING || peek == com.google.gson.stream.JsonToken.NUMBER) {
+                            name = reader.nextString()
+                        } else {
+                            reader.skipValue()
+                        }
+                    }
+                    "frequency", "freq" -> {
+                        if (peek == com.google.gson.stream.JsonToken.NUMBER || peek == com.google.gson.stream.JsonToken.STRING) {
+                            freq = reader.nextString().toIntOrNull() ?: 38000
+                        } else {
+                            reader.skipValue()
+                        }
+                    }
+                    "protocol" -> {
+                        if (peek == com.google.gson.stream.JsonToken.STRING) {
+                            protocol = reader.nextString()
+                        } else {
+                            reader.skipValue()
+                        }
+                    }
+                    "type" -> {
+                        if (peek == com.google.gson.stream.JsonToken.STRING) {
+                            explicitType = reader.nextString().lowercase()
+                        } else {
+                            reader.skipValue()
+                        }
+                    }
+                    "address", "addr" -> {
+                        if (peek == com.google.gson.stream.JsonToken.STRING || peek == com.google.gson.stream.JsonToken.NUMBER) {
+                            address = reader.nextString()
+                        } else {
+                            reader.skipValue()
+                        }
+                    }
+                    "command", "cmd", "code" -> {
+                        if (peek == com.google.gson.stream.JsonToken.STRING || peek == com.google.gson.stream.JsonToken.NUMBER) {
+                            command = reader.nextString()
+                        } else {
+                            reader.skipValue()
+                        }
+                    }
+                    "pattern", "data", "timings", "raw" -> {
+                        if (peek == com.google.gson.stream.JsonToken.BEGIN_ARRAY) {
+                            try {
+                                reader.beginArray()
+                                while (reader.hasNext()) {
+                                    try { patternList.add(reader.nextInt()) } catch (_: Exception) { reader.skipValue() }
+                                }
+                                reader.endArray()
+                            } catch (_: Exception) { reader.skipValue() }
+                        } else if (peek == com.google.gson.stream.JsonToken.STRING) {
+                            val s = reader.nextString()
+                            s.split(Regex("[\\s,]+")).mapNotNull { it.toIntOrNull() }.forEach { patternList.add(abs(it)) }
+                        } else {
+                            reader.skipValue()
+                        }
+                    }
+                    "items", "categories", "subcategories", "children", "commands", "buttons", "keys", "remotes", "devices" -> {
+                        if (peek == com.google.gson.stream.JsonToken.BEGIN_ARRAY) {
+                            hasSubFoldersOrItems = true
+                            try {
+                                reader.beginArray()
+                                while (reader.hasNext()) {
+                                    val sub = readItem(reader)
+                                    if (sub != null) subItems.add(sub)
+                                }
+                                reader.endArray()
+                            } catch (_: Exception) { reader.skipValue() }
+                        } else {
+                            reader.skipValue()
+                        }
+                    }
+                    else -> reader.skipValue()
+                }
+            }
+            reader.endObject()
+        } catch (e: Exception) {
+            return null
+        }
+
+        val hasSignalData = patternList.isNotEmpty() || !protocol.isNullOrBlank() || !address.isNullOrBlank() || !command.isNullOrBlank() || explicitType == "cmd" || explicitType == "command" || explicitType == "button" || explicitType == "key" || explicitType == "raw" || explicitType == "parsed"
+
+        return if (hasSubFoldersOrItems && !hasSignalData) {
+            IrFolder(name.ifEmpty { "Folder" }, subItems)
         } else {
-            freq = obj.get("frequency")?.asInt ?: 38000
-            icon = obj.get("iconName")?.asString
-            val pArr = obj.getAsJsonArray("pattern")
-            pattern = IntArray(pArr?.size() ?: 0) { pArr.get(it).asInt }
-            return Command(name, freq, pattern, icon)
+            val effectivePattern = if (patternList.isNotEmpty()) {
+                patternList.toIntArray()
+            } else if (!protocol.isNullOrBlank() && (!address.isNullOrBlank() || !command.isNullOrBlank())) {
+                try {
+                    IrProtocolEncoder.encodeToRawPattern(protocol, address ?: "0x0", command ?: "0x0")
+                } catch (e: Exception) {
+                    intArrayOf(100, 100)
+                }
+            } else {
+                intArrayOf(100, 100)
+            }
+            val cmd = Command(name.ifEmpty { "Komenda" }, freq, effectivePattern)
+            cmd.protocol = protocol
+            cmd.address = address
+            cmd.command = command
+            cmd
         }
     }
 
-    private fun readItemFromJson(obj: com.google.gson.JsonObject): Any {
-        val type = obj.get("type")?.asString ?: "cmd"
-        val name = obj.get("name")?.asString ?: ""
-        
-        if (type == "folder") {
-            val items = mutableListOf<Any>()
-            obj.getAsJsonArray("items")?.forEach { items.add(readItemFromJson(it.asJsonObject)) }
-            return IrFolder(name, items)
-        } else {
-            val freq = obj.get("frequency")?.asInt ?: 38000
-            val icon = obj.get("iconName")?.asString
-            val pArr = obj.getAsJsonArray("pattern")
-            val pattern = IntArray(pArr?.size() ?: 0) { pArr.get(it).asInt }
-            return Command(name, freq, pattern, icon)
+    fun showNotification(context: Context, title: String, message: String) {
+        val channelId = "bruce_ir_wearable_channel"
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val channel = android.app.NotificationChannel(channelId, "BruceIR Wearable Alerts", android.app.NotificationManager.IMPORTANCE_HIGH)
+            notificationManager.createNotificationChannel(channel)
         }
+        val notification = androidx.core.app.NotificationCompat.Builder(context, channelId)
+            .setSmallIcon(android.R.drawable.stat_sys_warning)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setPriority(androidx.core.app.NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .build()
+        try {
+            notificationManager.notify(System.currentTimeMillis().toInt(), notification)
+        } catch (_: Exception) {}
     }
 
 }

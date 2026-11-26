@@ -1,0 +1,193 @@
+PRZEKAZANIE DLA KOLEJNEGO AGENTA — FIRMWARE BRUCE-IR
+
+CEL I ZAKRES
+- Kontynuuj prace nad firmware'em. Na tym etapie nie zmieniaj aplikacji Android.
+- Użytkownik nie ma obecnie przy sobie modułu CC1101, więc nie da się potwierdzić
+  działania radia na sprzęcie.
+- Bezwzględnie: bez atrap/mocków CC1101, bez symulowania wykrycia modułu i bez
+  sukcesu zwracanego po błędzie. Nie ukrywaj problemów. Rozdzielaj jasno:
+  kompilacja udana, logika przetestowana, moduł wykryty oraz test radiowy wykonany.
+
+AKTYWNY PROJEKT
+- Źródłem PlatformIO jest firmware_bruce\bruce-caly1\ (zawiera platformio.ini).
+- Cel skonfigurowany jako domyślny: lilygo-t-embed-cc1101.
+- firmware_bruce\bruce-caly nie ma platformio.ini; nie traktuj go jako projektu
+  do budowania bez potwierdzenia.
+- Firmware jest osobnym repozytorium z licznymi lokalnymi zmianami. Nie resetuj,
+  nie checkoutuj i nie formatuj hurtowo istniejących zmian; w szczególności są
+  zmiany w obsłudze RF, plikach boardów i konfiguracji PlatformIO.
+
+STAN SPRAWDZONY TERAZ
+- Polecenie z katalogu firmware_bruce:
+  .\.venv\Scripts\platformio.exe run -d .\bruce-caly1 -e lilygo-t-embed-cc1101
+- Wynik: SUCCESS. RAM: 122320/327680 B (37,3%); Flash: 4237534/16777216 B
+  (25,3%).
+- To potwierdza wyłącznie kompilację obecnego drzewa. Nie potwierdza obecności
+  CC1101, TX, RX, czułości, anteny ani poprawności działania na urządzeniu.
+- Build uzupełnił lokalne zależności PlatformIO w .pio; nie usuwaj ich w ramach
+  porządkowania.
+
+ISTOTNE MIEJSCA W KODZIE
+- boards\lilygo-t-embed-cc1101\lilygo-t-embed-cc1101.ini — konfiguracja celu.
+- boards\lilygo-t-embed-cc1101\pins_arduino.h — mapowanie pinów, SPI oraz CC1101.
+- boards\lilygo-t-embed-cc1101\interface.cpp — inicjalizacja urządzenia, zasilania
+  i pinów boardu.
+- src\modules\rf\rf_utils.cpp — initRfModule(), wykrywanie CC1101 przez
+  ELECHOUSE_cc1101.getCC1101(), konfiguracja i deinit.
+- src\core\menu_items\RFMenu.cpp — menu RF i opis statusu.
+- src\modules\rf\protocols\ — obecna warstwa protokołów; zmieniona lokalnie.
+
+PRIORYTETY DLA NASTĘPNEJ PRACY
+1. Najpierw przejrzyj istniejące zmiany RF, nie przepisuj ich od zera. Sprawdź,
+   czy wszystkie ścieżki TX/RX respektują false zwracane przez initRfModule()
+   i zatrzymują działanie z czytelnym błędem.
+2. Nie przedstawiaj wyboru CC1101 w konfiguracji jako dowodu, że radio jest
+   podłączone. RFMenu.cpp dodaje "(CC1101)" na podstawie bruceConfigPins.rfModule,
+   czyli konfiguracji. Odróżnij wybrany moduł od wyniku rzeczywistej inicjalizacji.
+3. Sprawdź mapowanie SPI dla T-Embed: w pins_arduino.h zdefiniowano
+   SPI_SCK_PIN=11 i SPI_MISO_PIN=10, a stałe SCK/MISO wyglądają na przypisane
+   odwrotnie. Zweryfikuj użycie tych stałych i inicjalizację SPI w całym torze
+   przed zmianą — nie zakładaj, że sama kompilacja potwierdza poprawne piny.
+4. Sprawdź współdzielenie SPI z ekranem/SD oraz przełączanie anteny SW0/SW1
+   dla zakresów częstotliwości. To wymaga później testu na fizycznym T-Embed.
+5. Testy bez radia ogranicz do kompilacji, analizy błędów i deterministycznej
+   logiki protokołów (wejście/wyjście danych). Nie twórz imitacji sprzętu.
+6. Gdy sprzęt będzie dostępny, wykonaj osobny test inicjalizacji i jawnego
+   błędu braku CC1101, a następnie kontrolowane testy RX/TX na dozwolonym,
+   lokalnym sprzęcie. Zapisz osobno wyniki testów sprzętowych.
+
+POMYSL FUNKCJI RF: PASYWNY ANALIZATOR ODEBRANYCH SYGNALOW
+- Użytkownik uważa obecny przepływ „Copy code” / „RF Switch” za zbyt ubogi.
+  Kierunek: rozbudować firmware'owy ekran/przepływ odbioru o analizę zamiast
+  ograniczać go do przełączenia częstotliwości i skopiowania kodu.
+- Zacznij od istniejących RFScan(), rf_raw_record(), rf_spectrum(),
+  rf_CC1101_rssi(), rf_waterfall() i rejestru dekoderów w
+  src\modules\rf\protocols\. Zintegruj wyniki; nie twórz drugiego dekodera,
+  jeśli obecna warstwa już zapewnia potrzebną funkcję.
+- Raport odbioru może pokazywać: częstotliwość i zakres strojenia, siłę sygnału,
+  oszacowaną modulację (np. OOK/ASK albo FSK, jeśli da się to uzasadnić),
+  rozpoznany protokół/dekoder, zdekodowane pola dostępne dla dekodera, liczbę
+  powtórzeń, długość/niestabilność ramek oraz surowe czasy impulsów.
+- Każdy automatyczny wniosek musi mieć poziom pewności i uzasadnienie.
+  W przypadku braku wystarczających danych pokaż „nieznane / nierozpoznane”;
+  nie przypisuj protokołu na podstawie samej częstotliwości ani pojedynczej
+  niedoskonałej ramki.
+- Dla oceny „stały / zmienny” porównuj kolejne legalnie odebrane naciśnięcia
+  tego samego przycisku i, jeśli potrzeba, różne przyciski pilota. Oddziel
+  identyczne ramki od ramek różniących się danymi. Wynik zmienności nie jest
+  sam w sobie dowodem rolling code: szum, licznik, zmiana stanu, kodowanie
+  zmienne lub brak dekodera mogą dać podobny efekt. Pokazuj „stały”, „zmienny /
+  możliwy licznik”, „nierozpoznany” albo „za mało próbek”, a nie pewny werdykt
+  bez potwierdzonego dekodera/protokołu.
+- Trzymaj analizator w trybie odbioru i diagnostyki. Nie dodawaj funkcji
+  odtwarzania, przewidywania, obchodzenia ani generowania kodów zmiennych.
+- Zapis analizy powinien zachować surowy odbiór i metadane, żeby można było
+  porównać sesje; oddziel zapis od transmisji. Zaprojektuj UI firmware'u, bez
+  uzależniania tej funkcji od aplikacji Android.
+- Bez CC1101 można zweryfikować kompilację i czystą logikę formatowania/
+  porównywania zapisanych danych. Czułość odbiornika, klasyfikacja modulacji,
+  RSSI, granice ramek i jakość próbek wymagają późniejszej walidacji na sprzęcie.
+
+POMYSL DLA WIFI
+- Nie jest potrzebny szeroki refaktor Wi-Fi na tym etapie. Przydatnym,
+  bezpiecznym uzupełnieniem jest ekran diagnostyczny połączenia: tryb STA/AP,
+  SSID bez ujawniania sekretów, kanał, RSSI, IP, stan połączenia oraz czytelne
+  wyniki skanowania i eksport logu diagnostycznego.
+- Priorytetem użytkownika jest teraz analizator RF; nie rozszerzaj zakresu na
+  funkcje aplikacji Android.
+
+PAMIEC RAM — ZALECENIA
+- Ostatni wynik PlatformIO (122320/327680 B RAM, 37,3%) to statyczne zuzycie
+  raportowane dla firmware. Nie mowi, ile wolnej sterty/PSRAM pozostaje podczas
+  skanowania Wi-Fi, obslugi BLE, dekodowania RF ani w szczycie pracy UI.
+- Nie optymalizuj na slepo. Najpierw zbierz baseline: wolna sterta, minimalna
+  wolna sterta (low-water mark), najwiekszy wolny blok i PSRAM (jesli dostepna)
+  na starcie oraz w obciazajacych scenariuszach. Raportuj wartosci osobno.
+- Sprawdzaj najpierw duze globalne bufory i kopie danych, nie male zmienne.
+  Dla analizatora RF ustal twardy limit przechwycenia/próbek, przetwarzaj
+  strumieniowo lub w porcjach, unikaj jednoczesnego trzymania kilku kopii RAW
+  i nie pozwalaj, aby std::vector/String rosly bez limitu.
+- Preferuj ponowne uzywanie buforow i jawne limity/obsluge pelnego bufora.
+  Rozwaz PSRAM tylko dla duzych buforow, ktore nie wymagaja szybkiego dostepu
+  lub DMA; nie przenos automatycznie wszystkich alokacji, stosow zadan ani
+  buforow peryferyjnych do PSRAM.
+- Dla Wi-Fi skanowanie/listy sieci oraz JSON moga chwilowo zwiekszac zuzycie
+  sterty; sprawdz szczyt i zwalnianie zasobow po powrocie z widoku.
+- Po kazdej optymalizacji porownaj te same scenariusze i wyniki funkcjonalne.
+  Nie zmniejszaj buforow bez wykazania limitu i jawnej informacji o utraconych
+  danych; nie rezerwuj wielkich buforow statycznych tylko po to, by uniknac
+  fragmentacji.
+
+TPMS — DIAGNOSTYKA ODBIORCZA
+- Uzytkownik ma Mazde 6 GH z 2009 r. oraz czujniki TPMS-zamienniki kupione na
+  AliExpress. Podany model czujnika: BHB637140A, 433 MHz; oferta wymienia
+  zastosowania m.in. Mazda 6 i CX-5. Dokladna zgodnosc z autem nadal wymaga
+  weryfikacji po VIN/wersji systemu.
+- Cel: pasywny odbior i analiza. Nie zapisuj ramek RAW, probek ani payloadu,
+  ale zapisuj zdekodowane dane diagnostyczne do CSV.
+- Ekran diagnostyczny pokazuje ID czujnika, cisnienie, temperature,
+  status/flags, czestotliwosc, RSSI i licznik poprawnych ramek-kandydatow.
+  Zdekodowane ramki sa dopisywane do `/TPMS/tpms_diagnostics.csv` na storage
+  wybranym przez `getFsStorage()` (SD albo LittleFS). CSV zapisuje uptime od
+  startu monitora, etykiete `TG1C-like`, 433.92 MHz, ID, cisnienie kPa,
+  temperature C, flags, status, wynik XOR i RSSI dBm. Kazda zaakceptowana
+  ramka (takze powtorzenia) to osobny wiersz; brak raw timings i payloadu.
+- Nie zapisuj surowych przebiegow impulsow, pelnego payloadu, ramek ani pliku
+  `.sub` lub innego formatu, ktory mozna podac do istniejacej sciezki TX/RAW
+  replay. Nowa funkcja nie moze nadawac ani integrowac TPMS z encoderem/send/
+  replay.
+- Jest konkretny kandydat: publiczna dokumentacja rtl_433 przypisuje Mazda
+  BHB637140A do rodziny VDO TG1C. Opisuje ona 433.92 MHz, FSK, Manchester,
+  9 bajtow danych (72 bity po dekodowaniu) i XOR checksum dla danych. Opis
+  wymienia niektore Mazda MX-5, nie potwierdza Mazdy 6 GH; zgodnosc konkretnego
+  zamiennika i auta pozostaje do sprawdzenia.
+  Referencja protokolu: https://github.com/merbanan/rtl_433/blob/master/src/devices/tpms_abarth124.c
+- `rf_utils.cpp` ustawia modulacje OOK, wiec obecny `Scan/copy` nie powinien
+  byc przedstawiany jako odbior VDO TG1C. Jest osobny monitor RX z profilem
+  CC1101 2-FSK i parserem Manchester/XOR dla ramek-kandydatow TG1C; odbior
+  konkretnego czujnika wymaga pozniejszej walidacji na CC1101.
+- Nie ma wiarygodnego uniwersalnego dekodera dla dowolnych TPMS. Czestotliwosc
+  433 MHz sama nie wskazuje protokolu; zamienniki moga roznic sie modulacja,
+  framingiem, CRC i kodowaniem. Zaimplementuj tylko jawnie wspierane formaty,
+  w pierwszej kolejnosci kandydat TG1C, a pozostale oznaczaj jako nierozpoznane.
+- Nie kopiuj kodu z referencyjnego rtl_433 bez odrebnej analizy zgodnosci
+  licencji (plik ma naglowek GPL). Implementacja powinna bazowac na
+  udokumentowanym formacie i byc niezalezna; dodaj link/reference i testy
+  parsera dla poprawnej ramki, blednego checksum, nieprawidlowej dlugosci i
+  wartosci poza zakresem. Nie dodawaj testu nadajnika ani funkcji TX.
+- Aktualny kod implementacji znajduje sie w
+  `src/modules/rf/tpms_monitor.{h,cpp}`, z pozycja w menu RF i dokumentem
+  `src/modules/rf/TPMS.md`. Monitor ustawia CC1101 na 433.92 MHz / 2-FSK /
+  Manchester; aktualny profil kandydujacy: deviation 19 kHz, data rate 19.2
+  kbit/s, RX bandwidth 100 kHz. RMT probkuje asynchroniczne wyjscie GDO0 z
+  rozdzielczoscia 1 us; dekoder probuje hipotez komorki 26/52 us oraz
+  preambuly AA AA A9 (zwyklej lub podwojonej dla komorki 26 us), dekoduje
+  9 bajtow Manchester i wymaga XOR calego payloadu rownego zero. Ekran
+  rozroznia liczbe przechwycen RMT od poprawnych ramek oraz pokazuje liczbe
+  zboczy ostatniego przechwycenia, by pomoc rozdzielic brak sygnalu od bledu
+  profilu/dekodera. Zapisuje tylko diagnostyczne pola dekodowane do CSV; w
+  aktywnym module TPMS nie ma zapisu RAW/.sub ani sciezki TX/replay.
+  Parametry radiowe i odbior realnego czujnika pozostaja niezweryfikowane
+  sprzetowo.
+- Profil FSK monitora jest aplikowany po `RfRxSession::begin()`, bo begin
+  wywoluje `initRfModule()` i resetuje ogolne ustawienia radia do OOK. Istniejacy
+  `Record RAW` rowniez tworzy kanal przez `setup_rf_rx()`, ktore ponownie
+  inicjalizuje CC1101 jako OOK; samo przelaczenie modulacji w recorderze przed
+  ta funkcja nie wystarczy do przechwytywania TG1C.
+- Parser ma test `rf_tpms_parser_selftest()` pod komenda `subghz tpmscheck`
+  w buildzie `RF_DEBUG`. To test parsera danych, nie atrapa modulu radiowego.
+- Koniecznie zweryfikuj konfiguracje FSK i dekodowanie Manchester na fizycznym
+  CC1101 przed twierdzeniem, ze monitor komunikuje sie z czujnikiem. Build/test
+  parsera nie potwierdza odbioru radiowego.
+- Preferuj oddzielny modul monitorujacy RX nad wspieranymi parserami, bez
+  rozszerzania wspolnego `RfProtocolDef`/engine encode, bo mogloby to
+  przypadkowo udostepnic dane TPMS sciezce nadawczej.
+- Do walidacji dodaj testy parsera na jawnych, dokumentowanych przykladach dla
+  kazdego wspieranego protokolu; nie generuj ani nie emituj sygnalow radiowych.
+  Build bez CC1101 potwierdzi tylko kompilacje. RSSI, modulacja, odbior na
+  433 MHz i poprawne wartosci czujnikow wymagaja pozniejszego testu na fizycznym
+  CC1101 i znanym nadajniku/czujniku.
+
+ZASADA RAPORTOWANIA
+- Mów wprost, co przeszło, co nie przeszło i czego nie można było sprawdzić.
+- Nie używaj określenia „działa” wyłącznie dlatego, że kompilacja przeszła.

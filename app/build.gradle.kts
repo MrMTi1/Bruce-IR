@@ -10,11 +10,11 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.bruceir" // Powrót do oryginału
+        applicationId = "com.example.bruceir"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0_MTi"
+        versionCode = 4
+        versionName = "2.6.1_Premium"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -33,6 +33,7 @@ android {
     }
     buildFeatures {
         compose = true
+        viewBinding = true
     }
     // FIX: Usunięto stare composeOptions, bo teraz plugin pilnuje wersji
 }
@@ -44,6 +45,10 @@ dependencies {
     implementation(libs.androidx.recyclerview)
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("com.github.mik3y:usb-serial-for-android:3.8.0")
+    
+    // Coroutines
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
     
     // Compose
     implementation(platform(libs.androidx.compose.bom))

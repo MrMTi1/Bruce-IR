@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.BruceIR" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">#2196F3</item>
-        <item name="colorPrimaryDark">#1976D2</item>
-        <item name="colorAccent">#FF4081</item>
-        <item name="android:windowBackground">?attr/colorSurface</item>
+    <style name="Theme.BruceIR" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">#43C59E</item>
+        <item name="colorSecondary">#43C59E</item>
+        <item name="colorSurface">@color/oled_black</item>
+        
+        <!-- Podmieniono bruce_splash na bruceirbymti -->
+        <item name="android:windowBackground">@drawable/bruceirbymti</item>
+        
+        <item name="android:navigationBarColor">@color/oled_black</item>
+        <item name="android:statusBarColor">@color/oled_black</item>
     </style>
 </resources>

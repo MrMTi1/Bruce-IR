@@ -3,14 +3,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F0F2F5"
+    android:background="#000000"
     android:fitsSystemWindows="true">
 
     <LinearLayout
         android:id="@+id/luxHeader"
         android:layout_width="match_parent"
         android:layout_height="65dp"
-        android:background="#FFFFFF"
+        android:background="#000000"
         android:elevation="4dp"
         android:gravity="center_vertical"
         android:padding="12dp">
@@ -21,14 +21,15 @@
             android:layout_height="48dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_revert"
-            android:tint="#2196F3" />
+            app:tint="#FFFFFF"
+            android:contentDescription="Back" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:text="Lux Meter"
-            android:textColor="#2196F3"
+            android:textColor="#FFFFFF"
             android:textSize="20sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -60,7 +61,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="LUX"
-            android:textColor="#666666"
+            android:textColor="#BBBBBB"
             android:textSize="18sp"
             android:letterSpacing="0.2" />
 
@@ -70,7 +71,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="30dp"
             android:text="Calibrating..."
-            android:textColor="#444444"
+            android:textColor="#CCCCCC"
             android:textSize="16sp" />
     </LinearLayout>
 </RelativeLayout>

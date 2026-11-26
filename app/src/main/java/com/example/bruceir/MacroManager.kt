@@ -5,12 +5,14 @@ import android.os.Handler
 import android.os.Looper
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.*
 
 class MacroManager(private val context: Context, private val transmitter: IrTransmitter) {
 
-    private val handler = Handler(Looper.getMainLooper())
     private val gson = Gson()
     private var isRunning = false
+    private var macroJob: Job? = null
+    private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     fun getAllMacros(): MutableList<MacroSet> {
         val prefs = context.getSharedPreferences("macro_prefs", Context.MODE_PRIVATE)
@@ -55,27 +57,29 @@ class MacroManager(private val context: Context, private val transmitter: IrTran
         }
 
         isRunning = true
-        Thread {
-            do {
-                macro.commands.forEachIndexed { index, cmd ->
-                    if (!isRunning) return@forEachIndexed
-                    handler.post { onProgress(index + 1, macro.commands.size, cmd.name) }
-                    
-                    try {
-                        transmitter.transmit(cmd.frequency, cmd.pattern)
-                        handler.post { onCommandSent(cmd) }
-                    } catch (e: Exception) {}
-                    
-                    if (macro.delayMs > 0) Thread.sleep(macro.delayMs)
-                }
-            } while (macro.isLooping && isRunning)
-
+        macroJob = scope.launch {
+            withContext(Dispatchers.IO) {
+                do {
+                    macro.commands.forEachIndexed { index, cmd ->
+                        if (!isRunning) return@forEachIndexed
+                        withContext(Dispatchers.Main) { onProgress(index + 1, macro.commands.size, cmd.name) }
+                        
+                        try {
+                            transmitter.transmit(cmd.frequency, cmd.pattern)
+                            withContext(Dispatchers.Main) { onCommandSent(cmd) }
+                        } catch (e: Exception) {}
+                        
+                        if (macro.delayMs > 0) delay(macro.delayMs)
+                    }
+                } while (macro.isLooping && isRunning)
+            }
             isRunning = false
-            handler.post { onFinished() }
-        }.start()
+            onFinished()
+        }
     }
 
     fun stop() {
         isRunning = false
+        macroJob?.cancel()
     }
 }
