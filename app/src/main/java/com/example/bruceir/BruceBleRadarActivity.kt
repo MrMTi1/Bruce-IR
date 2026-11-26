@@ -1,10 +1,14 @@
 package com.example.bruceir
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
+import android.bluetooth.le.ScanSettings
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.media.AudioManager
@@ -14,6 +18,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.Gravity
+import android.view.View
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -30,6 +35,7 @@ class BruceBleRadarActivity : AppCompatActivity() {
     private lateinit var pbRssi: ProgressBar
     private lateinit var tvDeviceName: TextView
     private lateinit var btnToggleRadar: MaterialButton
+    private lateinit var btnSelectDevice: MaterialButton
     private lateinit var radarView: BruceBleRadarView
 
     private var bluetoothAdapter: BluetoothAdapter? = null
@@ -39,12 +45,15 @@ class BruceBleRadarActivity : AppCompatActivity() {
     private var toneGenerator: ToneGenerator? = null
     private val handler = Handler(Looper.getMainLooper())
     private var pendingRadarStart = false
+
+    private val discoveredDevices = mutableMapOf<String, Pair<String, Int>>() // MAC -> Pair(Name, RSSI)
+
     private val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { granted ->
         val allGranted = granted.values.all { it }
         if (allGranted && pendingRadarStart) {
             startRadar()
         } else if (!allGranted) {
-            tvStatus.text = "Brak uprawnień Bluetooth. Skanowanie BLE wymaga BLUETOOTH_SCAN/CONNECT."
+            tvStatus.text = "Brak uprawnień Bluetooth. Wymagane BLUETOOTH_SCAN/CONNECT."
         }
         pendingRadarStart = false
     }
@@ -61,17 +70,29 @@ class BruceBleRadarActivity : AppCompatActivity() {
     private var lastRssi = -100
 
     private val scanCallback = object : ScanCallback() {
+        @SuppressLint("MissingPermission")
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             val device = result.device
-            if (device.address == targetAddress) {
-                updateRssi(result.rssi)
+            val address = device.address
+            val name = if (!device.name.isNullOrBlank()) device.name else "Nieznane BLE ($address)"
+            val rssi = result.rssi
+
+            discoveredDevices[address] = Pair(name, rssi)
+
+            if (targetAddress.isNullOrEmpty() || address.equals(targetAddress, ignoreCase = true)) {
+                if (targetAddress.isNullOrEmpty()) {
+                    targetAddress = address
+                    targetName = name
+                    tvDeviceName.text = "$name\n(MAC: $address)"
+                }
+                updateRssi(rssi)
             }
         }
     }
 
     private val audioPulseRunnable = object : Runnable {
         override fun run() {
-            if (isRadarActive) {
+            if (isRadarActive && lastRssi > -95) {
                 playAudioPulse()
                 val delayMs = calculatePulseDelay(lastRssi)
                 handler.postDelayed(this, delayMs)
@@ -86,13 +107,13 @@ class BruceBleRadarActivity : AppCompatActivity() {
         window.navigationBarColor = Color.rgb(7, 10, 15)
 
         targetAddress = intent.getStringExtra("EXTRA_MAC")
-        targetName = intent.getStringExtra("EXTRA_NAME") ?: "Wybrane Urządzenie BLE"
+        targetName = intent.getStringExtra("EXTRA_NAME") ?: "Skanowanie Urządzeń BLE..."
 
         val bluetoothManager = getSystemService(BluetoothManager::class.java)
         bluetoothAdapter = bluetoothManager?.adapter
 
         try {
-            toneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, 90)
+            toneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, 80)
         } catch (_: Exception) {}
 
         buildScreen()
@@ -146,13 +167,18 @@ class BruceBleRadarActivity : AppCompatActivity() {
         header.addView(backButton, LinearLayout.LayoutParams(dp(50), dp(46)))
         root.addView(header)
 
-        tvDeviceName = text(targetName ?: "Urządzenie BLE", 16f, Color.WHITE, true).apply {
-            setPadding(0, dp(8), 0, dp(4))
+        tvDeviceName = text(if (!targetAddress.isNullOrEmpty()) "$targetName\n(MAC: $targetAddress)" else "Automatyczne Namierzanie Najbliższego BLE", 15f, Color.WHITE, true).apply {
+            setPadding(0, dp(8), 0, dp(8))
         }
         root.addView(tvDeviceName)
-        root.addView(text("MAC: $targetAddress", 12f, 0xFF9EADBD.toInt()).apply {
-            setPadding(0, 0, 0, dp(14))
-        })
+
+        btnSelectDevice = MaterialButton(this).apply {
+            text = "🔍 Wybierz Urządzenie z Listy Wykrytych BLE"
+            setBackgroundColor(0xFF283545.toInt())
+            setTextColor(Color.WHITE)
+            setOnClickListener { showDeviceSelectionPicker() }
+        }
+        root.addView(btnSelectDevice, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
 
         // Radar Card
         val radarCard = card()
@@ -182,7 +208,7 @@ class BruceBleRadarActivity : AppCompatActivity() {
             bottomMargin = dp(14)
         })
 
-        tvStatus = text("Status: Skanowanie i pomiar mocy sygnału...", 12f, 0xFF9EADBD.toInt()).apply {
+        tvStatus = text("Status: Skanowanie urządzeń BLE w eterze...", 12f, 0xFF9EADBD.toInt()).apply {
             gravity = Gravity.CENTER
         }
         radarLayout.addView(tvStatus)
@@ -201,10 +227,36 @@ class BruceBleRadarActivity : AppCompatActivity() {
         root.addView(radarCard)
     }
 
+    private fun showDeviceSelectionPicker() {
+        if (discoveredDevices.isEmpty()) {
+            Toast.makeText(this, "Trwa skanowanie... Odczekaj chwilę na wykrycie urządzeń.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val macs = discoveredDevices.keys.toList()
+        val labels = macs.map { mac ->
+            val (name, rssi) = discoveredDevices[mac]!!
+            "$name ($mac) - $rssi dBm"
+        }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle("Wybierz urządzenie BLE do lokalizacji:")
+            .setItems(labels) { _, which ->
+                val selectedMac = macs[which]
+                val (selectedName, _) = discoveredDevices[selectedMac]!!
+                targetAddress = selectedMac
+                targetName = selectedName
+                tvDeviceName.text = "$selectedName\n(MAC: $selectedMac)"
+                Toast.makeText(this, "Ustawiono cel: $selectedName", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Anuluj", null)
+            .show()
+    }
+
+    @SuppressLint("MissingPermission")
     private fun startRadar() {
         val adapter = bluetoothAdapter
         if (adapter == null || !adapter.isEnabled) {
-            Toast.makeText(this, "Bluetooth jest wyłączony!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Bluetooth w telefonie jest wyłączony!", Toast.LENGTH_SHORT).show()
             return
         }
         if (!hasBlePermissions()) {
@@ -219,13 +271,19 @@ class BruceBleRadarActivity : AppCompatActivity() {
         btnToggleRadar.setTextColor(Color.WHITE)
 
         try {
-            adapter.bluetoothLeScanner?.startScan(scanCallback)
+            val settings = ScanSettings.Builder()
+                .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                .build()
+
+            adapter.bluetoothLeScanner?.startScan(null, settings, scanCallback)
             handler.post(audioPulseRunnable)
+            tvStatus.text = "Status: Skaner aktywny. Szukanie sygnału BLE..."
         } catch (e: Exception) {
             tvStatus.text = "Błąd startu radaru: ${e.message}"
         }
     }
 
+    @SuppressLint("MissingPermission")
     private fun stopRadar() {
         isRadarActive = false
         btnToggleRadar.text = "📡 Uruchom Radar"
