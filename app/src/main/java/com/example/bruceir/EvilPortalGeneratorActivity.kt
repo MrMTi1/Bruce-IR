@@ -133,22 +133,13 @@ class EvilPortalGeneratorActivity : AppCompatActivity() {
         }
         cloneLayout.addView(etHtmlPreview, verticalParams(dp(6)))
 
-        val btnRowActions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         val btnSendLilyGo = MaterialButton(this).apply {
-            text = "📤 Wyślij do LilyGO"
-            setBackgroundColor(0xFF43C59E.toInt())
-            setTextColor(Color.BLACK)
+            text = "🚀 Wyślij Portal & Uruchom na LilyGO (ESP32)"
+            setBackgroundColor(0xFFE53935.toInt())
+            setTextColor(Color.WHITE)
             setOnClickListener { sendPortalToLilyGo() }
         }
-        val btnRunOnPhone = MaterialButton(this).apply {
-            text = "📱 Uruchom na Telefonie"
-            setBackgroundColor(0xFF1E88E5.toInt())
-            setTextColor(Color.WHITE)
-            setOnClickListener { togglePhonePortalServer() }
-        }
-        btnRowActions.addView(btnSendLilyGo, LinearLayout.LayoutParams(0, -2, 1f).apply { marginEnd = dp(4) })
-        btnRowActions.addView(btnRunOnPhone, LinearLayout.LayoutParams(0, -2, 1f).apply { marginStart = dp(4) })
-        cloneLayout.addView(btnRowActions, verticalParams(dp(6)))
+        cloneLayout.addView(btnSendLilyGo, verticalParams(dp(6)))
 
         cloneCard.addView(cloneLayout)
         root.addView(cloneCard, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
@@ -258,16 +249,6 @@ class EvilPortalGeneratorActivity : AppCompatActivity() {
         }
         BruceBleIrLink.sendCustomCommand(this, "wifi portal start")
         Toast.makeText(this, "Uruchomiono Evil Portal Rogue AP na LilyGO! Oczekiwanie na hasła...", Toast.LENGTH_LONG).show()
-    }
-
-    private fun togglePhonePortalServer() {
-        if (AppWebFileServerController.isRunning()) {
-            AppWebFileServerController.stop()
-            Toast.makeText(this, "Zatrzymano serwer portalu na telefonie", Toast.LENGTH_SHORT).show()
-        } else {
-            AppWebFileServerController.start(this)
-            Toast.makeText(this, "Uruchomiono serwer portalu na telefonie (Port 8080). Włącz Hotspot w telefonie.", Toast.LENGTH_LONG).show()
-        }
     }
 
     private fun addCapturedCredential(cred: String) {

@@ -169,10 +169,10 @@ class BruceBleTvRemoteActivity : AppCompatActivity(), BruceBleHidRemoteEngine.St
     override fun onDeviceConnected(device: BluetoothDevice) {
         runOnUiThread {
             @SuppressLint("MissingPermission")
-            val name = device.name ?: device.address
-            tvStatus.text = "Status: 🟢 TV / Klient połączony: $name! Pilot jest gotowy."
+            val name = if (!device.name.isNullOrBlank()) device.name else device.address
+            tvStatus.text = "Status: 🟢 Połączono z: $name (MAC: ${device.address})"
             tvStatus.setTextColor(0xFF43C59E.toInt())
-            Toast.makeText(this, "TV połączył się z pilotem BLE!", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Połączono z $name!", Toast.LENGTH_SHORT).show()
         }
     }
 

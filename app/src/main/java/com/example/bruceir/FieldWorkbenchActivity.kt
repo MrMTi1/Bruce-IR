@@ -413,9 +413,6 @@ class FieldWorkbenchActivity : AppCompatActivity() {
                 },
                 Tool("↗", R.string.workbench_tool_web, R.string.workbench_tool_web_desc) {
                     startActivity(Intent(this, BruceWebActivity::class.java))
-                },
-                Tool("▤", R.string.workbench_tool_modules, R.string.workbench_tool_modules_desc) {
-                    startActivity(Intent(this, RemoteConsoleActivity::class.java).putExtra("show_modules", true))
                 }
             ))
         }

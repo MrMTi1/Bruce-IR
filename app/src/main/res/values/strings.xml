@@ -555,8 +555,8 @@
     <string name="workbench_tool_net_advanced_desc">CIDR scanning, service banners, MAC vendors and device types</string>
     <string name="workbench_tool_ble_tv_remote">Bluetooth TV Remote (HID)</string>
     <string name="workbench_tool_ble_tv_remote_desc">Universal Bluetooth HID remote control for Smart TVs, Android TV, Samsung and LG</string>
-    <string name="workbench_tool_touchpad">Bluetooth Touchpad &amp; Mouse</string>
-    <string name="workbench_tool_touchpad_desc">Touchpad, mouse buttons and media navigation control over Bluetooth</string>
+    <string name="workbench_tool_touchpad">🦆 Bad BLE, Rubber Ducky &amp; Touchpad</string>
+    <string name="workbench_tool_touchpad_desc">Bad BLE Rubber Ducky script generator, live keyboard and mouse touchpad</string>
     <string name="workbench_tool_nrf24">NRF24 Spectrum Analyzer (2.4 GHz)</string>
     <string name="workbench_tool_nrf24_desc">2.4 GHz spectrum scanner, RF transmission detection and NRF24 immunity testing</string>
     <string name="workbench_tool_wifi_radar">Wi-Fi Signal Radar</string>

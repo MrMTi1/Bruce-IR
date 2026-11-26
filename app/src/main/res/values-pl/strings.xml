@@ -551,8 +551,8 @@
     <string name="workbench_tool_net_advanced_desc">Skan CIDR, banery usług, vendorzy MAC i typy urządzeń</string>
     <string name="workbench_tool_ble_tv_remote">Pilot BLE TV (Emulacja HID)</string>
     <string name="workbench_tool_ble_tv_remote_desc">Uniwersalny pilot Bluetooth HID do Smart TV, Android TV, Samsung i LG</string>
-    <string name="workbench_tool_touchpad">Touchpad BLE &amp; Myszka</string>
-    <string name="workbench_tool_touchpad_desc">Touchpad, przyciski myszki i nawigacja po odtwarzaczu przez Bluetooth</string>
+    <string name="workbench_tool_touchpad">🦆 Bad BLE, Rubber Ducky &amp; Touchpad</string>
+    <string name="workbench_tool_touchpad_desc">Generator skryptów Rubber Ducky Bad BLE, klawiatura na żywo i gładzik myszki</string>
     <string name="workbench_tool_nrf24">Analizator NRF24 (2.4 GHz)</string>
     <string name="workbench_tool_nrf24_desc">Skaner pasma 2.4 GHz, wykrywanie transmisji radiowych i testy odporności NRF24</string>
     <string name="workbench_tool_wifi_radar">Radar Wi-Fi (Skaner Siły Sygnału)</string>

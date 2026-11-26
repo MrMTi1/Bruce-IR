@@ -229,6 +229,7 @@ object BruceBleIrLink {
     }
 
     fun status(): String = currentStatus
+    val isConnected: Boolean get() = isReady
 
     fun connect(context: Context) {
         val appContext = context.applicationContext

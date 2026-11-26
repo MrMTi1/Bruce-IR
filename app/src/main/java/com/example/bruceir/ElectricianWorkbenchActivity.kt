@@ -564,7 +564,15 @@ class ElectricianWorkbenchActivity : AppCompatActivity(), SensorEventListener {
     private fun buildLuxCalculatorCard(): MaterialCardView {
         val luxCard = card()
         val luxLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        luxLayout.addView(text("💡 Kalkulator Oświetlenia (Luxy & Lumeny / Liczba Lamp)", 16f, Color.WHITE, true).apply { setPadding(0, 0, 0, dp(8)) })
+        luxLayout.addView(text("💡 Kalkulator Oświetlenia (Wprost & Odwrotny)", 16f, Color.WHITE, true).apply { setPadding(0, 0, 0, dp(8)) })
+
+        val spinnerCalcMode = Spinner(this).apply {
+            adapter = ArrayAdapter(this@ElectricianWorkbenchActivity, android.R.layout.simple_spinner_dropdown_item, listOf(
+                "1. Wymagana Liczba Lamp (Dla zadanego Luxu)",
+                "2. Odwrotny Kalkulator: Ile Luxów uzyskam z moich lamp?"
+            ))
+            setBackgroundResource(R.drawable.button_glass_bg)
+        }
 
         val etRoomLength = inputField("Długość pomieszczenia L (m) [np. 5.0]")
         etRoomLength.setText("5.0")
@@ -584,6 +592,23 @@ class ElectricianWorkbenchActivity : AppCompatActivity(), SensorEventListener {
             setBackgroundResource(R.drawable.button_glass_bg)
         }
 
+        val etLampCount = inputField("Liczba posiadanych/zamontowanych lamp (szt.) [np. 4]")
+        etLampCount.setText("4")
+        etLampCount.visibility = View.GONE
+
+        spinnerCalcMode.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                if (position == 0) {
+                    spinnerTargetLux.visibility = View.VISIBLE
+                    etLampCount.visibility = View.GONE
+                } else {
+                    spinnerTargetLux.visibility = View.GONE
+                    etLampCount.visibility = View.VISIBLE
+                }
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+
         val spinnerLightType = Spinner(this).apply {
             adapter = ArrayAdapter(this@ElectricianWorkbenchActivity, android.R.layout.simple_spinner_dropdown_item, listOf(
                 "LED (~100 lm/W)",
@@ -595,33 +620,25 @@ class ElectricianWorkbenchActivity : AppCompatActivity(), SensorEventListener {
 
         val spinnerInputMode = Spinner(this).apply {
             adapter = ArrayAdapter(this@ElectricianWorkbenchActivity, android.R.layout.simple_spinner_dropdown_item, listOf(
-                "Wybierz wg Mocy Lampy (W)",
-                "Wybierz wg Strumienia Świetlnego (Lumeny - lm)"
+                "Moc jednej lampy w Watach (W)",
+                "Strumień świetlny jednej lampy w Lumenach (lm)"
             ))
             setBackgroundResource(R.drawable.button_glass_bg)
         }
 
-        val etLampVal = inputField("Moc jednej lampy (W) [np. 15W] lub Lumeny [np. 1500lm]")
+        val etLampVal = inputField("Wartość dla 1 lampy (np. 15W lub 1500lm)")
         etLampVal.setText("15")
 
         val tvLuxResult = text("Wynik: Wpisz dane pomieszczenia", 13f, 0xFF9EADBD.toInt()).apply { setPadding(0, dp(6), 0, 0) }
 
         val btnCalcLux = MaterialButton(this).apply {
-            text = "Oblicz Wymaganą Liczbę Lamp i Strumień"
+            text = "Oblicz Parametry Oświetlenia"
             setBackgroundColor(0xFF43C59E.toInt())
             setTextColor(Color.BLACK)
             setOnClickListener {
                 val l = etRoomLength.text.toString().toDoubleOrNull() ?: 5.0
                 val w = etRoomWidth.text.toString().toDoubleOrNull() ?: 4.0
                 val area = l * w
-
-                val targetLux = when (spinnerTargetLux.selectedItemPosition) {
-                    0 -> 500.0
-                    1 -> 300.0
-                    2 -> 400.0
-                    3 -> 200.0
-                    else -> 100.0
-                }
 
                 val efficacy = when (spinnerLightType.selectedItemPosition) {
                     0 -> 100.0
@@ -635,23 +652,53 @@ class ElectricianWorkbenchActivity : AppCompatActivity(), SensorEventListener {
                 val lampLumens = if (isByLumens) inputVal else inputVal * efficacy
                 val lampWatts = if (isByLumens) inputVal / efficacy else inputVal
 
-                val totalLumensNeeded = (targetLux * area) / (0.65 * 0.8)
-                val requiredLampsCount = Math.ceil(totalLumensNeeded / lampLumens).toInt().coerceAtLeast(1)
-                val totalWattage = requiredLampsCount * lampWatts
+                if (spinnerCalcMode.selectedItemPosition == 0) {
+                    // MODE 1: Target Lux -> Required Lamps
+                    val targetLux = when (spinnerTargetLux.selectedItemPosition) {
+                        0 -> 500.0
+                        1 -> 300.0
+                        2 -> 400.0
+                        3 -> 200.0
+                        else -> 100.0
+                    }
+                    val totalLumensNeeded = (targetLux * area) / (0.65 * 0.8)
+                    val requiredLampsCount = Math.ceil(totalLumensNeeded / lampLumens).toInt().coerceAtLeast(1)
+                    val totalWattage = requiredLampsCount * lampWatts
 
-                tvLuxResult.text = String.format(
-                    java.util.Locale.getDefault(),
-                    "Powierzchnia: %.1f m² | Wymagane Lumeny: %.0f lm\nPotrzeba lamp: %d szt. (Total: %.0f W)",
-                    area, totalLumensNeeded, requiredLampsCount, totalWattage
-                )
+                    tvLuxResult.text = String.format(
+                        java.util.Locale.getDefault(),
+                        "Powierzchnia: %.1f m² | Wymagane Lumeny: %.0f lm\nPotrzeba lamp: %d szt. (Łączna moc: %.0f W)",
+                        area, totalLumensNeeded, requiredLampsCount, totalWattage
+                    )
+                } else {
+                    // MODE 2: Inverse Calculator (Lamp count + specs -> Calculated Luxes)
+                    val count = etLampCount.text.toString().toIntOrNull() ?: 4
+                    val totalLumens = count * lampLumens
+                    val estimatedLux = (totalLumens * 0.65 * 0.8) / area
+
+                    val normEval = when {
+                        estimatedLux >= 500 -> "Idealne do biura / pracy precyzyjnej (PN-EN 12464-1)"
+                        estimatedLux >= 300 -> "Odpowiednie do salonu, kuchni, pracowni"
+                        estimatedLux >= 200 -> "Odpowiednie do garażu, magazynu, łazienki"
+                        else -> "Oświetlenie orientacyjne / korytarzowe"
+                    }
+
+                    tvLuxResult.text = String.format(
+                        java.util.Locale.getDefault(),
+                        "Powierzchnia: %.1f m² | Osiągalne natężenie: %.0f lx\nOcena: %s (Łącznie: %.0f lm, %.0f W)",
+                        area, estimatedLux, normEval, totalLumens, count * lampWatts
+                    )
+                }
                 tvLuxResult.setTextColor(0xFF43C59E.toInt())
             }
         }
 
+        luxLayout.addView(spinnerCalcMode, verticalParams(dp(4)))
         luxLayout.addView(etRoomLength, verticalParams(dp(4)))
         luxLayout.addView(etRoomWidth, verticalParams(dp(4)))
         luxLayout.addView(etRoomHeight, verticalParams(dp(4)))
         luxLayout.addView(spinnerTargetLux, verticalParams(dp(6)))
+        luxLayout.addView(etLampCount, verticalParams(dp(4)))
         luxLayout.addView(spinnerLightType, verticalParams(dp(6)))
         luxLayout.addView(spinnerInputMode, verticalParams(dp(6)))
         luxLayout.addView(etLampVal, verticalParams(dp(4)))

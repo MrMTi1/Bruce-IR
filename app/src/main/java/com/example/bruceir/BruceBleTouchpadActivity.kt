@@ -14,22 +14,38 @@ import com.google.android.material.card.MaterialCardView
 
 class BruceBleTouchpadActivity : AppCompatActivity() {
 
+    private lateinit var tvBridgeStatus: TextView
     private lateinit var tvStatus: TextView
     private lateinit var touchPadArea: View
     private lateinit var etLiveText: EditText
     private lateinit var etScriptEditor: EditText
     private var lastX = 0f
     private var lastY = 0f
-    private var deviceName: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.statusBarColor = Color.rgb(7, 10, 15)
         window.navigationBarColor = Color.rgb(7, 10, 15)
 
-        deviceName = intent.getStringExtra("EXTRA_NAME") ?: "Smart TV / PC BLE"
-
         buildScreen()
+
+        BruceBleIrLink.setListener { status ->
+            runOnUiThread {
+                if (BruceBleIrLink.isConnected || status.contains("Connected", ignoreCase = true)) {
+                    tvBridgeStatus.text = "🟢 Połączono z LilyGO (Mostek ESP32 BLE Aktywny)"
+                    tvBridgeStatus.setTextColor(0xFF43C59E.toInt())
+                } else {
+                    tvBridgeStatus.text = "🔴 Status LilyGO: $status"
+                    tvBridgeStatus.setTextColor(0xFFE53935.toInt())
+                }
+            }
+        }
+        BruceBleIrLink.connect(this)
+    }
+
+    override fun onDestroy() {
+        BruceBleIrLink.setListener(null)
+        super.onDestroy()
     }
 
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
@@ -62,10 +78,27 @@ class BruceBleTouchpadActivity : AppCompatActivity() {
         header.addView(backButton, LinearLayout.LayoutParams(dp(50), dp(46)))
         root.addView(header)
 
-        tvStatus = text("Gesty dotykowe, klawiatura w czasie rzeczywistym i skrypty Bad BLE dla $deviceName", 12f, 0xFF9EADBD.toInt()).apply {
+        tvStatus = text("Gesty dotykowe, klawiatura w czasie rzeczywistym i skrypty Bad BLE przesłane przez LilyGO.", 12f, 0xFF9EADBD.toInt()).apply {
             setPadding(0, dp(6), 0, dp(10))
         }
         root.addView(tvStatus)
+
+        // 0. LILYGO CONNECTION STATUS CARD
+        val bridgeCard = card()
+        val bridgeLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        tvBridgeStatus = text("🔴 Łączenie z LilyGO (Mostek ESP32 BLE)...", 13f, 0xFFFFD54F.toInt(), true)
+        val btnConnectBridge = MaterialButton(this).apply {
+            text = "🔌 Połącz / Odśwież Połączenie z LilyGO"
+            setBackgroundColor(0xFF283545.toInt())
+            setTextColor(Color.WHITE)
+            setOnClickListener {
+                BruceBleIrLink.connect(this@BruceBleTouchpadActivity)
+            }
+        }
+        bridgeLayout.addView(tvBridgeStatus)
+        bridgeLayout.addView(btnConnectBridge, verticalParams(dp(6)))
+        bridgeCard.addView(bridgeLayout)
+        root.addView(bridgeCard, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
 
         // 1. TOUCHPAD & MOUSE SECTION
         val touchCard = card()
@@ -85,21 +118,21 @@ class BruceBleTouchpadActivity : AppCompatActivity() {
 
         val btnRowMouse = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         val btnLeftClick = MaterialButton(this).apply {
-            text = "🖱️ Lewy Klik"
+            text = "🖱️ Lewy Klik (LilyGO)"
             setBackgroundColor(0xFF43C59E.toInt())
             setTextColor(Color.BLACK)
             setOnClickListener {
-                BruceBleHidRemoteEngine.sendMouseMove(0, 0, leftClick = true, rightClick = false)
-                Toast.makeText(this@BruceBleTouchpadActivity, "Wysłano: Lewy Klik BLE", Toast.LENGTH_SHORT).show()
+                BruceBleIrLink.sendCustomCommand(this@BruceBleTouchpadActivity, "bu click left")
+                Toast.makeText(this@BruceBleTouchpadActivity, "Wysłano przez LilyGO: Lewy Klik", Toast.LENGTH_SHORT).show()
             }
         }
         val btnRightClick = MaterialButton(this).apply {
-            text = "🖱️ Prawy Klik"
+            text = "🖱️ Prawy Klik (LilyGO)"
             setBackgroundColor(0xFF283545.toInt())
             setTextColor(Color.WHITE)
             setOnClickListener {
-                BruceBleHidRemoteEngine.sendMouseMove(0, 0, leftClick = false, rightClick = true)
-                Toast.makeText(this@BruceBleTouchpadActivity, "Wysłano: Prawy Klik BLE", Toast.LENGTH_SHORT).show()
+                BruceBleIrLink.sendCustomCommand(this@BruceBleTouchpadActivity, "bu click right")
+                Toast.makeText(this@BruceBleTouchpadActivity, "Wysłano przez LilyGO: Prawy Klik", Toast.LENGTH_SHORT).show()
             }
         }
         btnRowMouse.addView(btnLeftClick, LinearLayout.LayoutParams(0, -2, 1f).apply { marginEnd = dp(4) })
@@ -112,7 +145,7 @@ class BruceBleTouchpadActivity : AppCompatActivity() {
         // 2. REAL-TIME KEYBOARD SECTION
         val kbCard = card()
         val kbLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        kbLayout.addView(text("⌨️ Klawiatura w Czasie Rzeczywistym", 14f, Color.WHITE, true).apply { setPadding(0, 0, 0, dp(6)) })
+        kbLayout.addView(text("⌨️ Klawiatura w Czasie Rzeczywistym (przez LilyGO)", 14f, Color.WHITE, true).apply { setPadding(0, 0, 0, dp(6)) })
 
         etLiveText = EditText(this).apply {
             hint = "Wpisz tekst tutaj - trafi na urządzenie w czasie rzeczywistym..."
@@ -131,13 +164,13 @@ class BruceBleTouchpadActivity : AppCompatActivity() {
         kbLayout.addView(etLiveText, verticalParams(dp(4)))
 
         val btnSendEnter = MaterialButton(this).apply {
-            text = "↵ Wyspij Enter"
+            text = "↵ Wyślij Enter"
             setBackgroundColor(0xFF283545.toInt())
             setTextColor(Color.WHITE)
             setOnClickListener {
                 BruceBleIrLink.sendCustomCommand(this@BruceBleTouchpadActivity, "ENTER")
                 etLiveText.setText("")
-                Toast.makeText(this@BruceBleTouchpadActivity, "Wysłano ENTER", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@BruceBleTouchpadActivity, "Wysłano przez LilyGO: ENTER", Toast.LENGTH_SHORT).show()
             }
         }
         kbLayout.addView(btnSendEnter, verticalParams(dp(4)))
@@ -170,7 +203,7 @@ class BruceBleTouchpadActivity : AppCompatActivity() {
         badBleLayout.addView(etScriptEditor, verticalParams(dp(6)))
 
         val btnRunScript = MaterialButton(this).apply {
-            text = "🚀 Uruchom Skrypt Bad BLE (przez LilyGO)"
+            text = "🚀 Wyślij & Uruchom Skrypt (przez LilyGO)"
             setBackgroundColor(0xFFE53935.toInt())
             setTextColor(Color.WHITE)
             setOnClickListener { executeDuckyScript() }
@@ -192,13 +225,13 @@ class BruceBleTouchpadActivity : AppCompatActivity() {
                 val dy = event.y - lastY
                 lastX = event.x
                 lastY = event.y
-                if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
-                    BruceBleHidRemoteEngine.sendMouseMove(dx.toInt(), dy.toInt())
-                    tvStatus.text = "Myszka BLE: ΔX = %d, ΔY = %d".format(dx.toInt(), dy.toInt())
+                if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+                    BruceBleIrLink.sendCustomCommand(this, "bu move ${dx.toInt()} ${dy.toInt()}")
+                    tvStatus.text = "Myszka BLE (LilyGO): ΔX = %d, ΔY = %d".format(dx.toInt(), dy.toInt())
                 }
             }
             MotionEvent.ACTION_UP -> {
-                tvStatus.text = "Dotknięto (Kliknięcie Lewe)"
+                tvStatus.text = "Dotknięto (Kliknięcie Lewe przez LilyGO)"
             }
         }
     }

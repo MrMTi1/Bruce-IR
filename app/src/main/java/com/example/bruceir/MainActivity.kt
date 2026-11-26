@@ -2333,50 +2333,66 @@ class MainActivity : AppCompatActivity() {
 
     private fun chooseCaptureFolder(transport: IrCaptureTransport) {
         val library = directIrPilotFolder ?: allData
-        val folders = listRemoteFolders(includeEmptyLeaves = true)
-        val labels = folders.map(::remoteDisplayPath).toMutableList()
-        labels.add(getString(R.string.ir_capture_create_remote))
+        val choices = arrayOf(
+            "➕ Dodaj do istniejącego pilota",
+            "✨ Utwórz nowy pilot"
+        )
+
+        val title = if (transport == IrCaptureTransport.WIFI) {
+            "📻 Live Capture IR (Wi-Fi)"
+        } else {
+            "📶 Live Capture IR (Bluetooth BLE)"
+        }
 
         AlertDialog.Builder(this)
-            .setTitle(
-                getString(
-                    if (transport == IrCaptureTransport.WIFI) {
-                        R.string.ir_capture_choose_wifi_remote
+            .setTitle(title)
+            .setItems(choices) { _, choice ->
+                if (choice == 0) {
+                    val folders = listRemoteFolders(includeEmptyLeaves = true)
+                    if (folders.isEmpty()) {
+                        Toast.makeText(this, "Brak istniejących pilotów. Utwórz nowy pilot.", Toast.LENGTH_SHORT).show()
+                        promptCreateNewRemoteForCapture(library, transport)
                     } else {
-                        R.string.ir_capture_choose_ble_remote
-                    }
-                )
-            )
-            .setItems(labels.toTypedArray()) { _, which ->
-                if (which < folders.size) {
-                    startCaptureInFolder(folders[which], transport)
-                } else {
-                    val input = EditText(this).apply {
-                        hint = getString(R.string.ir_capture_remote_name_hint)
-                    }
-                    AlertDialog.Builder(this)
-                        .setTitle(R.string.ir_capture_new_remote_title)
-                        .setView(input)
-                        .setPositiveButton(R.string.ir_capture_create_and_capture) { _, _ ->
-                            val name = input.text.toString().trim()
-                            if (name.isEmpty()) {
-                                Toast.makeText(
-                                    this,
-                                    R.string.ir_capture_remote_name_required,
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            } else {
-                                val folder = IrFolder(name)
-                                library.items.add(folder)
-                                save {
-                                    runOnUiThread {
-                                        startCaptureInFolder(folder, transport)
-                                    }
-                                }
+                        val labels = folders.map(::remoteDisplayPath).toTypedArray()
+                        AlertDialog.Builder(this)
+                            .setTitle("Wybierz istniejący pilot:")
+                            .setItems(labels) { _, which ->
+                                startCaptureInFolder(folders[which], transport)
                             }
+                            .setNegativeButton(R.string.dialog_cancel, null)
+                            .show()
+                    }
+                } else {
+                    promptCreateNewRemoteForCapture(library, transport)
+                }
+            }
+            .setNegativeButton(R.string.dialog_cancel, null)
+            .show()
+    }
+
+    private fun promptCreateNewRemoteForCapture(library: IrFolder, transport: IrCaptureTransport) {
+        val input = EditText(this).apply {
+            hint = getString(R.string.ir_capture_remote_name_hint)
+        }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.ir_capture_new_remote_title)
+            .setView(input)
+            .setPositiveButton(R.string.ir_capture_create_and_capture) { _, _ ->
+                val name = input.text.toString().trim()
+                if (name.isEmpty()) {
+                    Toast.makeText(
+                        this,
+                        R.string.ir_capture_remote_name_required,
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    val folder = IrFolder(name)
+                    library.items.add(folder)
+                    save {
+                        runOnUiThread {
+                            startCaptureInFolder(folder, transport)
                         }
-                        .setNegativeButton(R.string.dialog_cancel, null)
-                        .show()
+                    }
                 }
             }
             .setNegativeButton(R.string.dialog_cancel, null)
