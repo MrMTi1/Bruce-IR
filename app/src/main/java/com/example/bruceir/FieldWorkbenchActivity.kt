@@ -381,9 +381,6 @@ class FieldWorkbenchActivity : AppCompatActivity() {
                 },
                 Tool("⚡", R.string.workbench_tool_console, R.string.workbench_tool_console_desc) {
                     startActivity(Intent(this, RemoteConsoleActivity::class.java))
-                },
-                Tool("🔒", R.string.workbench_tool_recovery, R.string.workbench_tool_recovery_desc) {
-                    startActivity(Intent(this, SystemRecoveryGuidesActivity::class.java))
                 }
             ))
         }
@@ -471,6 +468,9 @@ class FieldWorkbenchActivity : AppCompatActivity() {
             advancedTools += Tool("⇄", R.string.workbench_tool_pcap, R.string.workbench_tool_pcap_desc) {
                 startActivity(Intent(this, PcapConverterActivity::class.java))
             }
+        }
+        advancedTools += Tool("🔒", R.string.workbench_tool_recovery, R.string.workbench_tool_recovery_desc) {
+            startActivity(Intent(this, SystemRecoveryGuidesActivity::class.java))
         }
         addSectionTools(root, advancedTools)
 
