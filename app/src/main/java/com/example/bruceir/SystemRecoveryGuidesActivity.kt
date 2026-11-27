@@ -83,7 +83,7 @@ class SystemRecoveryGuidesActivity : AppCompatActivity() {
         val netBootLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         netBootLayout.addView(text("🐧 Wbudowany TinyCore Linux (Na sztywno w APK)", 16f, 0xFF43C59E.toInt(), true).apply { setPadding(0, 0, 0, dp(6)) })
         netBootLayout.addView(text(
-            "Obraz TinyCore Linux jest spakowany bezpośrednio w zasobach (assets) aplikacji i gotowy do strumieniowania do pamięci RAM komputera przez LilyGO.",
+            "Obraz TinyCore Linux jest spakowany bezpośrednio w zasobach (assets) aplikacji i gotowy do strumieniowania do pamięci RAM komputera.",
             13f, Color.WHITE
         ).apply { setPadding(0, dp(4), 0, dp(8)) })
 
@@ -97,6 +97,29 @@ class SystemRecoveryGuidesActivity : AppCompatActivity() {
             setOnClickListener { filePickerLauncher.launch("*/*") }
         }
         netBootLayout.addView(btnPickIso, verticalParams(dp(6)))
+
+        val btnStartServer = MaterialButton(this).apply {
+            text = "🚀 Uruchom Serwer Strumieniowy ISO (HTTP Boot)"
+            setBackgroundColor(0xFF43C59E.toInt())
+            setTextColor(Color.BLACK)
+            setOnClickListener {
+                if (AppWebFileServerController.isRunning()) {
+                    AppWebFileServerController.stop()
+                    text = "🚀 Uruchom Serwer Strumieniowy ISO (HTTP Boot)"
+                    setBackgroundColor(0xFF43C59E.toInt())
+                    setTextColor(Color.BLACK)
+                    Toast.makeText(this@SystemRecoveryGuidesActivity, "Zatrzymano serwer HTTP", Toast.LENGTH_SHORT).show()
+                } else {
+                    AppWebFileServerController.start(this@SystemRecoveryGuidesActivity)
+                    text = "⏹ Zatrzymaj Serwer Strumieniowy"
+                    setBackgroundColor(0xFFE53935.toInt())
+                    setTextColor(Color.WHITE)
+                    val url = AppWebFileServerController.accessUrl("192.168.43.1") ?: "http://192.168.43.1:8080/"
+                    Toast.makeText(this@SystemRecoveryGuidesActivity, "Uruchomiono serwer! URL: $url", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+        netBootLayout.addView(btnStartServer, verticalParams(dp(6)))
 
         netBootCard.addView(netBootLayout)
         root.addView(netBootCard, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
