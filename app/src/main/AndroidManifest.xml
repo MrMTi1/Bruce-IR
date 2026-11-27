@@ -85,6 +85,11 @@
             android:screenOrientation="portrait" />
 
         <activity
+            android:name=".SystemRecoveryGuidesActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+
+        <activity
             android:name=".RfAnalyzerActivity"
             android:exported="false"
             android:screenOrientation="portrait" />

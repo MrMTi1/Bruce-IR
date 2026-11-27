@@ -563,6 +563,8 @@
     <string name="workbench_tool_wifi_radar_desc">Graphical Wi-Fi network radar and real-time AP distance estimation via RSSI</string>
     <string name="workbench_tool_evil_portal">Evil Portal Cloner &amp; Generator</string>
     <string name="workbench_tool_evil_portal_desc">Login page cloner (FB, Google, Router WPA), credential capture injection and Captive Portal server</string>
+    <string name="workbench_tool_recovery">🔒 Linux Single User &amp; Windows Utilman Hack</string>
+    <string name="workbench_tool_recovery_desc">Linux Single User and Windows Utilman password recovery guides with Bad BLE support</string>
     <string name="workbench_tool_file_hub">Web File Hub &amp; Storage</string>
     <string name="workbench_tool_file_hub_desc">Bi-directional phone storage file manager and HTTP server</string>
     <string name="workbench_tool_profile_code">Change App Profile &amp; Code</string>

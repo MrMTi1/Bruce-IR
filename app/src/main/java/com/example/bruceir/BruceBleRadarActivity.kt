@@ -3,12 +3,11 @@ package com.example.bruceir
 import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
-import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.media.AudioManager
@@ -53,7 +52,7 @@ class BruceBleRadarActivity : AppCompatActivity() {
         if (allGranted && pendingRadarStart) {
             startRadar()
         } else if (!allGranted) {
-            tvStatus.text = "Brak uprawnień Bluetooth. Wymagane BLUETOOTH_SCAN/CONNECT."
+            tvStatus.text = "🔴 Brak uprawnień Bluetooth. Przyznaj uprawnienia w systemie."
         }
         pendingRadarStart = false
     }
@@ -74,18 +73,31 @@ class BruceBleRadarActivity : AppCompatActivity() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             val device = result.device
             val address = device.address
-            val name = if (!device.name.isNullOrBlank()) device.name else "Nieznane BLE ($address)"
+            val name = if (!device.name.isNullOrBlank()) device.name else "Urządzenie BLE ($address)"
             val rssi = result.rssi
 
             discoveredDevices[address] = Pair(name, rssi)
 
-            if (targetAddress.isNullOrEmpty() || address.equals(targetAddress, ignoreCase = true)) {
-                if (targetAddress.isNullOrEmpty()) {
-                    targetAddress = address
-                    targetName = name
-                    tvDeviceName.text = "$name\n(MAC: $address)"
+            // Dynamic tracking logic
+            if (targetAddress.isNullOrEmpty()) {
+                // Track highest RSSI device automatically
+                val strongest = discoveredDevices.maxByOrNull { it.value.second }
+                if (strongest != null) {
+                    targetAddress = strongest.key
+                    targetName = strongest.value.first
+                    runOnUiThread {
+                        tvDeviceName.text = "Namierzanie: ${strongest.value.first}\n(MAC: ${strongest.key})"
+                    }
+                    updateRssi(strongest.value.second)
                 }
+            } else if (address.equals(targetAddress, ignoreCase = true)) {
                 updateRssi(rssi)
+            }
+        }
+
+        override fun onScanFailed(errorCode: Int) {
+            runOnUiThread {
+                tvStatus.text = "🔴 Błąd skanowania BLE (Kod $errorCode)"
             }
         }
     }
@@ -229,7 +241,7 @@ class BruceBleRadarActivity : AppCompatActivity() {
 
     private fun showDeviceSelectionPicker() {
         if (discoveredDevices.isEmpty()) {
-            Toast.makeText(this, "Trwa skanowanie... Odczekaj chwilę na wykrycie urządzeń.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Trwa skanowanie eteru... Odczekaj chwilę.", Toast.LENGTH_SHORT).show()
             return
         }
         val macs = discoveredDevices.keys.toList()
@@ -255,12 +267,18 @@ class BruceBleRadarActivity : AppCompatActivity() {
     @SuppressLint("MissingPermission")
     private fun startRadar() {
         val adapter = bluetoothAdapter
-        if (adapter == null || !adapter.isEnabled) {
-            Toast.makeText(this, "Bluetooth w telefonie jest wyłączony!", Toast.LENGTH_SHORT).show()
+        if (adapter == null) {
+            tvStatus.text = "🔴 Ten telefon nie posiada modułu Bluetooth."
+            return
+        }
+        if (!adapter.isEnabled) {
+            tvStatus.text = "🔴 Bluetooth jest wyłączony! Włącz Bluetooth w telefonie."
+            Toast.makeText(this, "Włącz Bluetooth w telefonie!", Toast.LENGTH_LONG).show()
             return
         }
         if (!hasBlePermissions()) {
             pendingRadarStart = true
+            tvStatus.text = "⚠️ Wymagane uprawnienia Bluetooth..."
             permissionLauncher.launch(requiredBlePermissions())
             return
         }
@@ -271,15 +289,20 @@ class BruceBleRadarActivity : AppCompatActivity() {
         btnToggleRadar.setTextColor(Color.WHITE)
 
         try {
+            val scanner = adapter.bluetoothLeScanner
+            if (scanner == null) {
+                tvStatus.text = "🔴 Błąd: bluetoothLeScanner jest niedostępny. Wyłącz i włącz Bluetooth w telefonie."
+                return
+            }
             val settings = ScanSettings.Builder()
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                 .build()
 
-            adapter.bluetoothLeScanner?.startScan(null, settings, scanCallback)
+            scanner.startScan(null, settings, scanCallback)
             handler.post(audioPulseRunnable)
-            tvStatus.text = "Status: Skaner aktywny. Szukanie sygnału BLE..."
+            tvStatus.text = "Status: 🟢 Skaner aktywny! Szukanie sygnału BLE w eterze..."
         } catch (e: Exception) {
-            tvStatus.text = "Błąd startu radaru: ${e.message}"
+            tvStatus.text = "🔴 Błąd startu radaru: ${e.message}"
         }
     }
 
@@ -311,7 +334,7 @@ class BruceBleRadarActivity : AppCompatActivity() {
                 else -> "🔴 Sygnał skrajnie słaby"
             }
             tvDistance.text = String.format(Locale.getDefault(), "Szacowana odległość:\n~ %.1f m\n(%s)", estimatedMeters, statusCategory)
-            tvStatus.text = "RSSI: $rssi dBm | Moc sygnału: $normalizedProgress%"
+            tvStatus.text = "Status: 🟢 Wykryto sygnał! RSSI: $rssi dBm (${discoveredDevices.size} urządzeń w eterze)"
         }
     }
 
