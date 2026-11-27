@@ -51,8 +51,8 @@ class SystemRecoveryGuidesActivity : AppCompatActivity() {
             gravity = Gravity.CENTER_VERTICAL
         }
         val titleStack = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        titleStack.addView(text("SYSTEM RECOVERY & BAD USB BOOT", 10f, 0xFF43C59E.toInt(), true))
-        titleStack.addView(text("TinyCore ISO & Single User Mode", 22f, Color.WHITE, true).apply {
+        titleStack.addView(text("SYSTEM RECOVERY & COMMAND CHEAT SHEET", 10f, 0xFF43C59E.toInt(), true))
+        titleStack.addView(text("Ściągawka Komend & Tryby Ratunkowe", 22f, Color.WHITE, true).apply {
             setPadding(0, dp(3), 0, 0)
         })
         header.addView(titleStack, LinearLayout.LayoutParams(0, -2, 1f))
@@ -64,44 +64,47 @@ class SystemRecoveryGuidesActivity : AppCompatActivity() {
         header.addView(backButton, LinearLayout.LayoutParams(dp(50), dp(46)))
         root.addView(header)
 
-        root.addView(text("Wbudowany system TinyCore w APK, sieć ISO oraz automatyka Bad USB (po kablu USB).", 12f, 0xFF9EADBD.toInt()).apply {
+        root.addView(text("Dokładne komendy i procedury krok po kroku do omijania haseł i diagnostyki.", 12f, 0xFF9EADBD.toInt()).apply {
             setPadding(0, dp(6), 0, dp(14))
         })
 
-        // 0. TINYCORE ISO & NETWORK BOOT CARD
-        val netBootCard = card()
-        val netBootLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        netBootLayout.addView(text("🐧 Wbudowany TinyCore Linux & Network Boot", 16f, 0xFF43C59E.toInt(), true).apply { setPadding(0, 0, 0, dp(6)) })
-        netBootLayout.addView(text(
-            "W aplikacji wbudowano domyślny obraz ratunkowy TinyCore Linux (ok. 16 MB).\n" +
-                    "Możesz go użyć w trybie sieciowym (HTTP Boot) lub wskazać własny plik .iso z pamięci telefonu.",
-            13f, Color.WHITE
-        ).apply { setPadding(0, dp(4), 0, dp(8)) })
+        // 0. CHEAT SHEET CARD (KOMENDY W PIGUŁCE)
+        val cheatSheetText = 
+                "🐧 LINUX SINGLE USER MODE:\n" +
+                "• W GRUB naciśnij 'e' na wpisie kernela\n" +
+                "• Dopisz na końcu linii zaczynającej się od 'linux':\n" +
+                "  init=/bin/bash\n" +
+                "• Uruchom: Ctrl + X\n" +
+                "• Po uruchomieniu powłoki:\n" +
+                "  1. mount -o remount,rw /\n" +
+                "  2. passwd root\n" +
+                "  3. reboot\n\n" +
+                "📋 LINUX ZRSUT UŻYTKOWNIKÓW:\n" +
+                "  cat /etc/passwd\n" +
+                "  cat /etc/shadow\n\n" +
+                "🪟 WINDOWS UTILMAN HACK (Ominięcie hasła na lock screenie):\n" +
+                "• Z nośnika ratunkowego / CMD wejdź na partycję systemu:\n" +
+                "  cd /d C:\\Windows\\System32\n" +
+                "  ren utilman.exe utilman.bak\n" +
+                "  copy cmd.exe utilman.exe\n" +
+                "• Po restarcie na ekranie logowania kliknij Ułatwienia Dostępu:\n" +
+                "  net user Administrator NoweHaslo123!\n" +
+                "  net user"
 
-        tvSelectedIso = text("Domyślny system: Wbudowany TinyCore Linux (16MB)", 12f, 0xFF43C59E.toInt())
-        netBootLayout.addView(tvSelectedIso, verticalParams(dp(4)))
-
-        val btnPickIso = MaterialButton(this).apply {
-            text = "📁 Wybierz inny plik ISO / Obraz"
-            setBackgroundColor(0xFF283545.toInt())
-            setTextColor(Color.WHITE)
-            setOnClickListener { filePickerLauncher.launch("*/*") }
-        }
-        netBootLayout.addView(btnPickIso, verticalParams(dp(6)))
-
-        netBootCard.addView(netBootLayout)
-        root.addView(netBootCard, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
+        val cheatCard = card()
+        val cheatLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        cheatLayout.addView(text("📋 Ściągawka Dokładnych Komend (Cheat Sheet)", 16f, 0xFF43C59E.toInt(), true).apply { setPadding(0, 0, 0, dp(6)) })
+        cheatLayout.addView(text(cheatSheetText, 12f, 0xFF9EADBD.toInt()).apply {
+            setBackgroundResource(R.drawable.button_glass_bg)
+            setPadding(dp(12), dp(10), dp(12), dp(10))
+        })
+        cheatCard.addView(cheatLayout)
+        root.addView(cheatCard, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
 
         // 1. LINUX SINGLE USER MODE & NET USERS CARD (BAD USB)
         val linuxCard = card()
         val linuxLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        linuxLayout.addView(text("🐧 Linux Single User Mode & Net Users (Bad USB)", 16f, 0xFF43C59E.toInt(), true).apply { setPadding(0, 0, 0, dp(6)) })
-        linuxLayout.addView(text(
-            "Ważne: Komendy są wysyłane przez kabel USB (Bad USB / HID), ponieważ komputer w fazie rozruchu nie obsługuje Bluetooth.\n" +
-                    "1. Zrestartuj komputer z Linuxem i w menu GRUB naciśnij 'e'.\n" +
-                    "2. Dopisz na końcu linii 'linux': init=/bin/bash i uruchom (Ctrl+X).",
-            13f, Color.WHITE
-        ).apply { setPadding(0, dp(4), 0, dp(8)) })
+        linuxLayout.addView(text("🐧 Linux Single User Mode & Net Users (Bad USB)", 16f, Color.WHITE, true).apply { setPadding(0, 0, 0, dp(6)) })
 
         val btnDumpUsers = MaterialButton(this).apply {
             text = "📋 Bad USB: Zrzut Użytkowników (cat /etc/passwd)"
@@ -109,7 +112,7 @@ class SystemRecoveryGuidesActivity : AppCompatActivity() {
             setTextColor(Color.WHITE)
             setOnClickListener {
                 BruceBleIrLink.sendCustomCommand(this@SystemRecoveryGuidesActivity, "bu string \"cat /etc/passwd\"\nbu enter")
-                Toast.makeText(this@SystemRecoveryGuidesActivity, "Wysłano skrypt Bad USB do LilyGO", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@SystemRecoveryGuidesActivity, "Wysłano zrzut /etc/passwd przez Bad USB", Toast.LENGTH_SHORT).show()
             }
         }
         linuxLayout.addView(btnDumpUsers, verticalParams(dp(4)))
@@ -130,13 +133,7 @@ class SystemRecoveryGuidesActivity : AppCompatActivity() {
         // 2. WINDOWS UTILMAN HACK CARD (BAD USB)
         val winCard = card()
         val winLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        winLayout.addView(text("🪟 Windows Utilman / Net Users (Bad USB)", 16f, 0xFF43C59E.toInt(), true).apply { setPadding(0, 0, 0, dp(6)) })
-        winLayout.addView(text(
-            "Instrukcja krok po kroku:\n" +
-                    "1. Podmień utilman.exe na cmd.exe z poziomu nośnika ratunkowego.\n" +
-                    "2. Na ekranie logowania Windows uruchom skrypt Bad USB.",
-            13f, Color.WHITE
-        ).apply { setPadding(0, dp(4), 0, dp(8)) })
+        winLayout.addView(text("🪟 Windows Utilman & Net User (Bad USB)", 16f, Color.WHITE, true).apply { setPadding(0, 0, 0, dp(6)) })
 
         val btnDumpWinUsers = MaterialButton(this).apply {
             text = "📋 Bad USB: Lista Użytkowników Windows (net user)"
