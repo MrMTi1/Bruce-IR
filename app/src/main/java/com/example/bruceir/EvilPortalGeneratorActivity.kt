@@ -247,7 +247,7 @@ class EvilPortalGeneratorActivity : AppCompatActivity() {
             Toast.makeText(this, "Brak kodu HTML do wysłania!", Toast.LENGTH_SHORT).show()
             return
         }
-        BruceBleIrLink.sendCustomCommand(this, "wifi portal start")
+        BruceBleIrLink.sendCustomCommand(this, "evilportal start")
         Toast.makeText(this, "Uruchomiono Evil Portal Rogue AP na LilyGO! Oczekiwanie na hasła...", Toast.LENGTH_LONG).show()
     }
 

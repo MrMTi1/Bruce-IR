@@ -11,7 +11,6 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.BluetoothStatusCodes
 import android.bluetooth.le.ScanCallback
-import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
@@ -64,22 +63,34 @@ object BruceBleIrLink {
         @SuppressLint("MissingPermission")
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             if (!isScanning) return
-            stopScan()
-            isConnecting = true
-            setStatus("Connecting to LilyGo…")
-            try {
-                val connectedGatt = result.device.connectGatt(
-                    context, false, gattCallback, BluetoothDevice.TRANSPORT_LE
-                )
-                if (connectedGatt == null) {
+            val device = result.device
+            val name = device.name.orEmpty()
+            val uuids = result.scanRecord?.serviceUuids
+
+            val isMatch = name.contains("LilyGo", ignoreCase = true) ||
+                    name.contains("Bruce", ignoreCase = true) ||
+                    name.contains("Smart TV", ignoreCase = true) ||
+                    name.contains("Remote", ignoreCase = true) ||
+                    uuids?.any { it.uuid == SERVICE_UUID } == true
+
+            if (isMatch) {
+                stopScan()
+                isConnecting = true
+                setStatus("Found LilyGo ($name). Connecting…")
+                try {
+                    val connectedGatt = device.connectGatt(
+                        context, false, gattCallback, BluetoothDevice.TRANSPORT_LE
+                    )
+                    if (connectedGatt == null) {
+                        isConnecting = false
+                        setStatus("Could not connect to LilyGo.")
+                    } else {
+                        gatt = connectedGatt
+                    }
+                } catch (exception: SecurityException) {
                     isConnecting = false
-                    setStatus("Could not connect to LilyGo.")
-                } else {
-                    gatt = connectedGatt
+                    setStatus("Bluetooth permission is required.")
                 }
-            } catch (exception: SecurityException) {
-                isConnecting = false
-                setStatus("Bluetooth permission is required.")
             }
         }
 
@@ -318,11 +329,10 @@ object BruceBleIrLink {
                 setStatus("Bluetooth LE scanning is unavailable.")
                 return
             }
-            val filter = ScanFilter.Builder().setServiceUuid(ParcelUuid(SERVICE_UUID)).build()
             val settings = ScanSettings.Builder()
                 .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                 .build()
-            scanner.startScan(listOf(filter), settings, scanCallback)
+            scanner.startScan(null, settings, scanCallback)
             isScanning = true
             setStatus("Searching for LilyGo…")
             handler.postDelayed(scanTimeout, SCAN_TIMEOUT_MS)
