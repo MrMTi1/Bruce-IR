@@ -117,7 +117,12 @@ object BruceBleIrLink {
                 return
             }
             if (newState == BluetoothProfile.STATE_CONNECTED) {
-                handler.post { setStatus("Connected; preparing LilyGo…") }
+                handler.post {
+                    isReady = true
+                    isConnecting = false
+                    setStatus("Połączono z LilyGO")
+                    runNextCommand()
+                }
                 gatt.discoverServices()
             }
         }
