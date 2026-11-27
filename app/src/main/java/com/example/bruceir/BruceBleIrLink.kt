@@ -291,6 +291,7 @@ object BruceBleIrLink {
         val cmd = command.trim()
         if (cmd.toByteArray(StandardCharsets.UTF_8).size >= MAX_COMMAND_BYTES) return false
 
+        DebugConsoleActivity.log("BLE-CMD", cmd)
         handler.post {
             if (commands.size >= MAX_QUEUED_COMMANDS) {
                 setStatus("LilyGo command queue is full.")
@@ -358,6 +359,7 @@ object BruceBleIrLink {
 
     private fun receiveOutput(bytes: ByteArray) {
         val text = String(bytes, StandardCharsets.UTF_8)
+        DebugConsoleActivity.log("BLE-RX", text)
         handler.post {
             if (!waitingForPrompt) return@post
             receiveBuffer.append(text)
@@ -447,7 +449,9 @@ object BruceBleIrLink {
     }
 
     private fun setStatus(status: String) {
+        if (currentStatus == status) return
         currentStatus = status
+        DebugConsoleActivity.log("BLE", status)
         listener?.invoke(status)
     }
 

@@ -561,6 +561,8 @@
     <string name="workbench_tool_evil_portal_desc">Klonowanie stron logowania (FB, Google, Router WPA), wstrzykiwanie przechwytywania haseł i serwer Captive Portal</string>
     <string name="workbench_tool_recovery">🔒 Linux Single User &amp; Windows Utilman Hack</string>
     <string name="workbench_tool_recovery_desc">Przewodniki odzyskiwania haseł systemu Linux (Single User) i Windows (Utilman) ze wsparciem Bad BLE</string>
+    <string name="workbench_tool_debug">🐛 Konsola Diagnostyczna BLE (Live Sniffer)</string>
+    <string name="workbench_tool_debug_desc">Podgląd na żywo bufora logów transmisji szeregowej BLE z LilyGO i stanów połączenia</string>
     <string name="workbench_tool_file_hub">Web File Hub &amp; Menedżer Plików</string>
     <string name="workbench_tool_file_hub_desc">Dwukierunkowy serwer HTTP i menedżer plików w pamięci telefonu</string>
     <string name="workbench_tool_rf_analyzer">Analizator &amp; Edytor RF 433/868</string>

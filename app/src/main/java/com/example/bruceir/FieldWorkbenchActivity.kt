@@ -472,6 +472,9 @@ class FieldWorkbenchActivity : AppCompatActivity() {
         advancedTools += Tool("🔒", R.string.workbench_tool_recovery, R.string.workbench_tool_recovery_desc) {
             startActivity(Intent(this, SystemRecoveryGuidesActivity::class.java))
         }
+        advancedTools += Tool("🐛", R.string.workbench_tool_debug, R.string.workbench_tool_debug_desc) {
+            startActivity(Intent(this, DebugConsoleActivity::class.java))
+        }
         addSectionTools(root, advancedTools)
 
         emptySearchResult = text(getString(R.string.workbench_no_results), 14f, 0xFF9EADBD.toInt()).apply {

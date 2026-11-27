@@ -565,6 +565,8 @@
     <string name="workbench_tool_evil_portal_desc">Login page cloner (FB, Google, Router WPA), credential capture injection and Captive Portal server</string>
     <string name="workbench_tool_recovery">🔒 Linux Single User &amp; Windows Utilman Hack</string>
     <string name="workbench_tool_recovery_desc">Linux Single User and Windows Utilman password recovery guides with Bad BLE support</string>
+    <string name="workbench_tool_debug">🐛 BLE Live Debug Console &amp; Sniffer</string>
+    <string name="workbench_tool_debug_desc">Live serial stream, connection status and packet sniffer buffer from LilyGO</string>
     <string name="workbench_tool_file_hub">Web File Hub &amp; Storage</string>
     <string name="workbench_tool_file_hub_desc">Bi-directional phone storage file manager and HTTP server</string>
     <string name="workbench_tool_profile_code">Change App Profile &amp; Code</string>
