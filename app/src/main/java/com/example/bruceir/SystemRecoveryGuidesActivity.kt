@@ -20,9 +20,9 @@ class SystemRecoveryGuidesActivity : AppCompatActivity() {
     private val filePickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri != null) {
             selectedIsoUri = uri
-            val path = uri.path ?: "wybrany_obraz.iso"
+            val path = uri.path ?: "tinycore.iso"
             tvSelectedIso.text = "Wybrany obraz / ISO: $path"
-            Toast.makeText(this, "Wybrano plik obrazu do strumieniowania!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Wybrano system do strumieniowania!", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -51,8 +51,8 @@ class SystemRecoveryGuidesActivity : AppCompatActivity() {
             gravity = Gravity.CENTER_VERTICAL
         }
         val titleStack = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        titleStack.addView(text("SYSTEM RECOVERY & NETWORK BOOT", 10f, 0xFF43C59E.toInt(), true))
-        titleStack.addView(text("Instrukcja Krok po Kroku & Narzędzia", 22f, Color.WHITE, true).apply {
+        titleStack.addView(text("SYSTEM RECOVERY & BAD USB BOOT", 10f, 0xFF43C59E.toInt(), true))
+        titleStack.addView(text("TinyCore ISO & Single User Mode", 22f, Color.WHITE, true).apply {
             setPadding(0, dp(3), 0, 0)
         })
         header.addView(titleStack, LinearLayout.LayoutParams(0, -2, 1f))
@@ -64,27 +64,25 @@ class SystemRecoveryGuidesActivity : AppCompatActivity() {
         header.addView(backButton, LinearLayout.LayoutParams(dp(50), dp(46)))
         root.addView(header)
 
-        root.addView(text("Kompleksowe przewodniki, menedżer plików ISO i automatyka Bad BLE / Net Users.", 12f, 0xFF9EADBD.toInt()).apply {
+        root.addView(text("Wbudowany system TinyCore w APK, sieć ISO oraz automatyka Bad USB (po kablu USB).", 12f, 0xFF9EADBD.toInt()).apply {
             setPadding(0, dp(6), 0, dp(14))
         })
 
-        // 0. NETWORK BOOT & ISO STREAMING CARD (STEP BY STEP)
+        // 0. TINYCORE ISO & NETWORK BOOT CARD
         val netBootCard = card()
         val netBootLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        netBootLayout.addView(text("🌐 Network Boot & ISO Streaming (Krok po Kroku)", 16f, 0xFF43C59E.toInt(), true).apply { setPadding(0, 0, 0, dp(6)) })
+        netBootLayout.addView(text("🐧 Wbudowany TinyCore Linux & Network Boot", 16f, 0xFF43C59E.toInt(), true).apply { setPadding(0, 0, 0, dp(6)) })
         netBootLayout.addView(text(
-            "Krok 1: Wgraj mały system ratunkowy (np. Tiny Core Linux .iso) do pamięci telefonu.\n" +
-                    "Krok 2: Kliknij poniższy przycisk 'Wybierz plik ISO', aby wskazać obraz w telefonie.\n" +
-                    "Krok 3: Uruchom wbudowany serwer HTTP w telefonie (Web File Hub).\n" +
-                    "Krok 4: Wepnij LilyGO z GRUB-em do komputera. LilyGO pobierze obraz przez USB/Wi-Fi z telefonu i uruchomi go w RAM komputera.",
+            "W aplikacji wbudowano domyślny obraz ratunkowy TinyCore Linux (ok. 16 MB).\n" +
+                    "Możesz go użyć w trybie sieciowym (HTTP Boot) lub wskazać własny plik .iso z pamięci telefonu.",
             13f, Color.WHITE
         ).apply { setPadding(0, dp(4), 0, dp(8)) })
 
-        tvSelectedIso = text("Wybrany obraz / ISO: Brak (Wskaź plik)", 12f, 0xFF9EADBD.toInt())
+        tvSelectedIso = text("Domyślny system: Wbudowany TinyCore Linux (16MB)", 12f, 0xFF43C59E.toInt())
         netBootLayout.addView(tvSelectedIso, verticalParams(dp(4)))
 
         val btnPickIso = MaterialButton(this).apply {
-            text = "📁 Wybierz plik ISO / Obraz z pamięci telefonu"
+            text = "📁 Wybierz inny plik ISO / Obraz"
             setBackgroundColor(0xFF283545.toInt())
             setTextColor(Color.WHITE)
             setOnClickListener { filePickerLauncher.launch("*/*") }
@@ -94,76 +92,70 @@ class SystemRecoveryGuidesActivity : AppCompatActivity() {
         netBootCard.addView(netBootLayout)
         root.addView(netBootCard, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
 
-        // 1. LINUX SINGLE USER MODE & NET USERS CARD
+        // 1. LINUX SINGLE USER MODE & NET USERS CARD (BAD USB)
         val linuxCard = card()
         val linuxLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        linuxLayout.addView(text("🐧 Linux Single User Mode & Net Users Dump", 16f, 0xFF43C59E.toInt(), true).apply { setPadding(0, 0, 0, dp(6)) })
+        linuxLayout.addView(text("🐧 Linux Single User Mode & Net Users (Bad USB)", 16f, 0xFF43C59E.toInt(), true).apply { setPadding(0, 0, 0, dp(6)) })
         linuxLayout.addView(text(
-            "Instrukcja krok po kroku:\n" +
+            "Ważne: Komendy są wysyłane przez kabel USB (Bad USB / HID), ponieważ komputer w fazie rozruchu nie obsługuje Bluetooth.\n" +
                     "1. Zrestartuj komputer z Linuxem i w menu GRUB naciśnij 'e'.\n" +
-                    "2. Dopisz na końcu linii 'linux': init=/bin/bash\n" +
-                    "3. Uruchom system (Ctrl+X) i wykonaj poniższe skrypty.",
+                    "2. Dopisz na końcu linii 'linux': init=/bin/bash i uruchom (Ctrl+X).",
             13f, Color.WHITE
         ).apply { setPadding(0, dp(4), 0, dp(8)) })
 
         val btnDumpUsers = MaterialButton(this).apply {
-            text = "📋 Wyślij skrypt: Zrzut Użytkowników (cat /etc/passwd)"
+            text = "📋 Bad USB: Zrzut Użytkowników (cat /etc/passwd)"
             setBackgroundColor(0xFF283545.toInt())
             setTextColor(Color.WHITE)
             setOnClickListener {
-                BruceBleIrLink.sendCustomCommand(this@SystemRecoveryGuidesActivity, "STRING cat /etc/passwd")
-                BruceBleIrLink.sendCustomCommand(this@SystemRecoveryGuidesActivity, "ENTER")
-                Toast.makeText(this@SystemRecoveryGuidesActivity, "Wysłano zrzut /etc/passwd przez Bad BLE", Toast.LENGTH_SHORT).show()
+                BruceBleIrLink.sendCustomCommand(this@SystemRecoveryGuidesActivity, "bu string \"cat /etc/passwd\"\nbu enter")
+                Toast.makeText(this@SystemRecoveryGuidesActivity, "Wysłano skrypt Bad USB do LilyGO", Toast.LENGTH_SHORT).show()
             }
         }
         linuxLayout.addView(btnDumpUsers, verticalParams(dp(4)))
 
         val btnSendLinux = MaterialButton(this).apply {
-            text = "🚀 Wejdź w Single User Mode (mount + passwd root)"
+            text = "🚀 Bad USB: Wejdź w Single User Mode (mount + passwd)"
             setBackgroundColor(0xFF43C59E.toInt())
             setTextColor(Color.BLACK)
             setOnClickListener {
-                BruceBleIrLink.sendCustomCommand(this@SystemRecoveryGuidesActivity, "STRING mount -o remount,rw / && passwd root")
-                BruceBleIrLink.sendCustomCommand(this@SystemRecoveryGuidesActivity, "ENTER")
-                Toast.makeText(this@SystemRecoveryGuidesActivity, "Wysłano skrypt Single User do LilyGO", Toast.LENGTH_SHORT).show()
+                BruceBleIrLink.sendCustomCommand(this@SystemRecoveryGuidesActivity, "bu string \"mount -o remount,rw / && passwd root\"\nbu enter")
+                Toast.makeText(this@SystemRecoveryGuidesActivity, "Wysłano skrypt Single User przez Bad USB", Toast.LENGTH_SHORT).show()
             }
         }
         linuxLayout.addView(btnSendLinux, verticalParams(dp(6)))
         linuxCard.addView(linuxLayout)
         root.addView(linuxCard, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
 
-        // 2. WINDOWS UTILMAN HACK CARD
+        // 2. WINDOWS UTILMAN HACK CARD (BAD USB)
         val winCard = card()
         val winLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        winLayout.addView(text("🪟 Windows Utilman / Net Users Dump", 16f, Color.WHITE, true).apply { setPadding(0, 0, 0, dp(6)) })
+        winLayout.addView(text("🪟 Windows Utilman / Net Users (Bad USB)", 16f, 0xFF43C59E.toInt(), true).apply { setPadding(0, 0, 0, dp(6)) })
         winLayout.addView(text(
             "Instrukcja krok po kroku:\n" +
-                    "1. Uruchom konsolę z nośnika instalacyjnego Windows.\n" +
-                    "2. Podmień utilman.exe na cmd.exe na partycji systemowej.\n" +
-                    "3. Na ekranie logowania otwórz konsolę i użyj poniższych skryptów.",
+                    "1. Podmień utilman.exe na cmd.exe z poziomu nośnika ratunkowego.\n" +
+                    "2. Na ekranie logowania Windows uruchom skrypt Bad USB.",
             13f, Color.WHITE
         ).apply { setPadding(0, dp(4), 0, dp(8)) })
 
         val btnDumpWinUsers = MaterialButton(this).apply {
-            text = "📋 Wyślij skrypt: Lista Użytkowników Windows (net user)"
+            text = "📋 Bad USB: Lista Użytkowników Windows (net user)"
             setBackgroundColor(0xFF283545.toInt())
             setTextColor(Color.WHITE)
             setOnClickListener {
-                BruceBleIrLink.sendCustomCommand(this@SystemRecoveryGuidesActivity, "STRING net user")
-                BruceBleIrLink.sendCustomCommand(this@SystemRecoveryGuidesActivity, "ENTER")
-                Toast.makeText(this@SystemRecoveryGuidesActivity, "Wysłano net user przez Bad BLE", Toast.LENGTH_SHORT).show()
+                BruceBleIrLink.sendCustomCommand(this@SystemRecoveryGuidesActivity, "bu string \"net user\"\nbu enter")
+                Toast.makeText(this@SystemRecoveryGuidesActivity, "Wysłano net user przez Bad USB", Toast.LENGTH_SHORT).show()
             }
         }
         winLayout.addView(btnDumpWinUsers, verticalParams(dp(4)))
 
         val btnSendWin = MaterialButton(this).apply {
-            text = "🚀 Wyślij skrypt: Zmiana Hasła Administratora Windows"
+            text = "🚀 Bad USB: Zmiana Hasła Administratora Windows"
             setBackgroundColor(0xFFE53935.toInt())
             setTextColor(Color.WHITE)
             setOnClickListener {
-                BruceBleIrLink.sendCustomCommand(this@SystemRecoveryGuidesActivity, "STRING net user Administrator Hack123!")
-                BruceBleIrLink.sendCustomCommand(this@SystemRecoveryGuidesActivity, "ENTER")
-                Toast.makeText(this@SystemRecoveryGuidesActivity, "Wysłano skrypt zmiany hasła admina przez Bad BLE", Toast.LENGTH_SHORT).show()
+                BruceBleIrLink.sendCustomCommand(this@SystemRecoveryGuidesActivity, "bu string \"net user Administrator Hack123!\"\nbu enter")
+                Toast.makeText(this@SystemRecoveryGuidesActivity, "Wysłano skrypt zmiany hasła admina przez Bad USB", Toast.LENGTH_SHORT).show()
             }
         }
         winLayout.addView(btnSendWin, verticalParams(dp(6)))
