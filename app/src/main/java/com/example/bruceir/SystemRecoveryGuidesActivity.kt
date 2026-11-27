@@ -20,9 +20,9 @@ class SystemRecoveryGuidesActivity : AppCompatActivity() {
     private val filePickerLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri != null) {
             selectedIsoUri = uri
-            val path = uri.path ?: "tinycore.iso"
+            val path = uri.path ?: "custom.iso"
             tvSelectedIso.text = "Wybrany obraz / ISO: $path"
-            Toast.makeText(this, "Wybrano system do strumieniowania!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Wybrano własny obraz do strumieniowania!", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -35,6 +35,16 @@ class SystemRecoveryGuidesActivity : AppCompatActivity() {
     }
 
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
+
+    private fun getEmbeddedTinyCoreStatus(): String {
+        return try {
+            val stream = assets.open("boot/tinycore.iso")
+            stream.close()
+            "Wbudowany w APK: TinyCore Linux (Zapakowany na sztywno)"
+        } catch (e: Exception) {
+            "Brak wbudowanego obrazu w APK"
+        }
+    }
 
     private fun buildScreen() {
         val scroll = ScrollView(this).apply {
@@ -51,8 +61,8 @@ class SystemRecoveryGuidesActivity : AppCompatActivity() {
             gravity = Gravity.CENTER_VERTICAL
         }
         val titleStack = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        titleStack.addView(text("SYSTEM RECOVERY & COMMAND CHEAT SHEET", 10f, 0xFF43C59E.toInt(), true))
-        titleStack.addView(text("Ściągawka Komend & Tryby Ratunkowe", 22f, Color.WHITE, true).apply {
+        titleStack.addView(text("SYSTEM RECOVERY & BAD USB BOOT", 10f, 0xFF43C59E.toInt(), true))
+        titleStack.addView(text("TinyCore ISO & Single User Mode", 22f, Color.WHITE, true).apply {
             setPadding(0, dp(3), 0, 0)
         })
         header.addView(titleStack, LinearLayout.LayoutParams(0, -2, 1f))
@@ -64,11 +74,34 @@ class SystemRecoveryGuidesActivity : AppCompatActivity() {
         header.addView(backButton, LinearLayout.LayoutParams(dp(50), dp(46)))
         root.addView(header)
 
-        root.addView(text("Dokładne komendy i procedury krok po kroku do omijania haseł i diagnostyki.", 12f, 0xFF9EADBD.toInt()).apply {
+        root.addView(text("Wbudowany system TinyCore w APK, sieć ISO oraz automatyka Bad USB (po kablu USB).", 12f, 0xFF9EADBD.toInt()).apply {
             setPadding(0, dp(6), 0, dp(14))
         })
 
-        // 0. CHEAT SHEET CARD (KOMENDY W PIGUŁCE)
+        // 0. TINYCORE ISO & NETWORK BOOT CARD
+        val netBootCard = card()
+        val netBootLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        netBootLayout.addView(text("🐧 Wbudowany TinyCore Linux (Na sztywno w APK)", 16f, 0xFF43C59E.toInt(), true).apply { setPadding(0, 0, 0, dp(6)) })
+        netBootLayout.addView(text(
+            "Obraz TinyCore Linux jest spakowany bezpośrednio w zasobach (assets) aplikacji i gotowy do strumieniowania do pamięci RAM komputera przez LilyGO.",
+            13f, Color.WHITE
+        ).apply { setPadding(0, dp(4), 0, dp(8)) })
+
+        tvSelectedIso = text(getEmbeddedTinyCoreStatus(), 12f, 0xFF43C59E.toInt())
+        netBootLayout.addView(tvSelectedIso, verticalParams(dp(4)))
+
+        val btnPickIso = MaterialButton(this).apply {
+            text = "📁 Użyj własnego pliku ISO / Obrazu"
+            setBackgroundColor(0xFF283545.toInt())
+            setTextColor(Color.WHITE)
+            setOnClickListener { filePickerLauncher.launch("*/*") }
+        }
+        netBootLayout.addView(btnPickIso, verticalParams(dp(6)))
+
+        netBootCard.addView(netBootLayout)
+        root.addView(netBootCard, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
+
+        // 1. CHEAT SHEET CARD
         val cheatSheetText = 
                 "🐧 LINUX SINGLE USER MODE:\n" +
                 "• W GRUB naciśnij 'e' na wpisie kernela\n" +
@@ -93,7 +126,7 @@ class SystemRecoveryGuidesActivity : AppCompatActivity() {
 
         val cheatCard = card()
         val cheatLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        cheatLayout.addView(text("📋 Ściągawka Dokładnych Komend (Cheat Sheet)", 16f, 0xFF43C59E.toInt(), true).apply { setPadding(0, 0, 0, dp(6)) })
+        cheatLayout.addView(text("📋 Ściągawka Komend (Cheat Sheet)", 16f, 0xFF43C59E.toInt(), true).apply { setPadding(0, 0, 0, dp(6)) })
         cheatLayout.addView(text(cheatSheetText, 12f, 0xFF9EADBD.toInt()).apply {
             setBackgroundResource(R.drawable.button_glass_bg)
             setPadding(dp(12), dp(10), dp(12), dp(10))
@@ -101,10 +134,10 @@ class SystemRecoveryGuidesActivity : AppCompatActivity() {
         cheatCard.addView(cheatLayout)
         root.addView(cheatCard, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
 
-        // 1. LINUX SINGLE USER MODE & NET USERS CARD (BAD USB)
+        // 2. LINUX AUTOMATION (BAD USB)
         val linuxCard = card()
         val linuxLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        linuxLayout.addView(text("🐧 Linux Single User Mode & Net Users (Bad USB)", 16f, Color.WHITE, true).apply { setPadding(0, 0, 0, dp(6)) })
+        linuxLayout.addView(text("🐧 Linux Single User & Net Users (Bad USB)", 16f, Color.WHITE, true).apply { setPadding(0, 0, 0, dp(6)) })
 
         val btnDumpUsers = MaterialButton(this).apply {
             text = "📋 Bad USB: Zrzut Użytkowników (cat /etc/passwd)"
@@ -130,7 +163,7 @@ class SystemRecoveryGuidesActivity : AppCompatActivity() {
         linuxCard.addView(linuxLayout)
         root.addView(linuxCard, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
 
-        // 2. WINDOWS UTILMAN HACK CARD (BAD USB)
+        // 3. WINDOWS AUTOMATION (BAD USB)
         val winCard = card()
         val winLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         winLayout.addView(text("🪟 Windows Utilman & Net User (Bad USB)", 16f, Color.WHITE, true).apply { setPadding(0, 0, 0, dp(6)) })
