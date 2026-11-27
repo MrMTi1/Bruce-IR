@@ -94,7 +94,12 @@ object BruceBleIrLink {
                 handler.post {
                     if (this@BruceBleIrLink.gatt === gatt) {
                         clearConnection(gatt)
-                        setStatus("LilyGo disconnected. Tap a remote button to reconnect.")
+                        setStatus("LilyGo rozłączone. Automatyczne ponowne łączenie...")
+                        handler.postDelayed({
+                            if (!isReady && !isScanning && !isConnecting) {
+                                context?.let { connect(it) }
+                            }
+                        }, 2000L)
                     }
                 }
                 return
