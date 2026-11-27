@@ -15,6 +15,7 @@ import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
+import android.widget.Toast
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -253,13 +254,21 @@ object BruceBleIrLink {
         val command = "ir tx_raw $frequency ${pattern.joinToString(" ")}"
         if (command.toByteArray(StandardCharsets.UTF_8).size >= MAX_COMMAND_BYTES) return false
 
+        if (!isReady) {
+            handler.post {
+                Toast.makeText(context.applicationContext, "⚠️ BŁĄD: LilyGO nie jest połączone! Włącz urządzenie.", Toast.LENGTH_LONG).show()
+            }
+            setStatus("Błąd: LilyGO rozłączone.")
+            return false
+        }
+
         handler.post {
             if (commands.size >= MAX_QUEUED_COMMANDS) {
                 setStatus("LilyGo command queue is full; try again shortly.")
                 return@post
             }
             commands.addLast(command)
-            if (isReady) runNextCommand() else connect(context)
+            runNextCommand()
         }
         return true
     }
@@ -269,13 +278,21 @@ object BruceBleIrLink {
         val cmd = command.trim()
         if (cmd.toByteArray(StandardCharsets.UTF_8).size >= MAX_COMMAND_BYTES) return false
 
+        if (!isReady) {
+            handler.post {
+                Toast.makeText(context.applicationContext, "⚠️ BŁĄD: LilyGO nie jest połączone! Włącz urządzenie.", Toast.LENGTH_LONG).show()
+            }
+            setStatus("Błąd: LilyGO rozłączone.")
+            return false
+        }
+
         handler.post {
             if (commands.size >= MAX_QUEUED_COMMANDS) {
                 setStatus("LilyGo command queue is full.")
                 return@post
             }
             commands.addLast(cmd)
-            if (isReady) runNextCommand() else connect(context)
+            runNextCommand()
         }
         return true
     }
