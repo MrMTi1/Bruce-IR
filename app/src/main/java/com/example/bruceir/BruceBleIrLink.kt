@@ -67,7 +67,8 @@ object BruceBleIrLink {
             val name = device.name.orEmpty()
             val uuids = result.scanRecord?.serviceUuids
 
-            val isMatch = name.contains("LilyGo", ignoreCase = true) ||
+            val isMatch = name.contains("Bruc", ignoreCase = true) ||
+                    name.contains("LilyGo", ignoreCase = true) ||
                     name.contains("Bruce", ignoreCase = true) ||
                     name.contains("Smart TV", ignoreCase = true) ||
                     name.contains("Remote", ignoreCase = true) ||
